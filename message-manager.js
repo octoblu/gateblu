@@ -1,24 +1,22 @@
 var skynet = require('skynet');
 var _ = require('lodash');
-var configDefaults = require('./config-defaults.json');
-module.exports = function(config) {
-    config = _.defaults(config, configDefaults);
-    var skynetConnection = skynet.createConnection({ server : config.server, port : config.port, uuid: config.uuid, token: config.token });
 
-    skynetConnection.on('notReady', function(){
-      if (!config.uuid) {
+module.exports = function(configManager) {
+    var config = configManager.loadConfig();
+    var skynetConnection = skynet.createConnection({ uuid: config.uuid, token: config.token });
+    var deviceManager = require('./device-manager')(config);
+
+    if (!config.uuid) {
         skynetConnection.register({type: 'gateway'}, function(data){
-          skynetConnection.identify({uuid: data.uuid, token: data.token});
+            skynetConnection.identify({uuid: data.uuid, token: data.token});
         });
-      }
-    });
-
-    var deviceManager = require('./device-manager')(config, skynetConnection);
+    }
 
     skynetConnection.on('ready', function(readyResponse){
+        console.log('ready');
         config.uuid = readyResponse.uuid;
         config.token = readyResponse.token;
-        deviceManager.saveConfig(config);
+        configManager.saveConfig(config);
     });
 
     skynetConnection.on('message', function(message){
