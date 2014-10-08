@@ -3,20 +3,32 @@ var path = require('path');
 var rimraf = require('rimraf');
 var forever = require('forever-monitor');
 var exec = require('child_process').exec;
+var _ = require('lodash');
 
 module.exports = function(config) {
   var deviceManager = {
     setupDevice: function (device, callback) {
-      setupDevice(config, device, callback);
+      setupDevice(device, callback);
     },
     startDevice: function (device) {
-      startDevice(config, device);
+      startDevice(device);
+    },
+    refreshDevices: function(devices) {
+      refreshDevices(devices);
     }
   };
 
   return deviceManager;
 
-  function setupDevice(config, device, callback) {
+  function refreshDevices(devices) {
+    _.each(devices, setupAndStartDevice);
+  }
+
+  function setupAndStartDevice(device) {
+    setupDevice(device, startDevice);
+  }
+
+  function setupDevice(device, callback) {
     var devicePath = path.join(config.devicePath, device.uuid);
     var devicePathTmp = path.join(config.tmpPath, device.uuid);
 
@@ -35,7 +47,7 @@ module.exports = function(config) {
       if (error) {
         console.error(error);
       }
-      fs.renameSync(path.join(devicePathTmp, 'node_modules', device.connector), devicePath);
+      fs.copySync(path.join(devicePathTmp, 'node_modules', device.connector), devicePath);
       fs.writeFileSync(path.join(devicePath, 'meshblu.json'), JSON.stringify(device));
       rimraf.sync(devicePathTmp);
       if (callback) {
@@ -44,7 +56,7 @@ module.exports = function(config) {
     });
   }
 
-  function startDevice(config, device) {
+  function startDevice(device) {
     var devicePath = path.join(config.devicePath, device.uuid);
     var child = new (forever.Monitor)('start', {
       max: 3,
