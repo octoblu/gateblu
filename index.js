@@ -1,6 +1,25 @@
-var configManager = require('./config-manager');
+var skynet = require('skynet');
 
-device = {name: 'test-subdevice', connector: 'meshblu-blink1', uuid: 'f105d101-4ea8-11e4-9133-338b9914afd1', token: '000xfoik6yptoi529egexh80t3rcc8fr'}
+module.exports = function(config) {
+    var skynetConnection = skynet.createConnection({ uuid: config.uuid, token: config.token });
+    var deviceManager = require('./device-manager')(config);
 
-var deviceManager = require('./device-manager')(configManager.loadConfig());
-deviceManager.setupDevice(device, deviceManager.startDevice);
+    if (!config.uuid) {
+        skynetConnection.register({type: 'gateway'}, function(data){
+            skynetConnection.identify({uuid: data.uuid, token: data.token});
+        });
+    }
+
+    skynetConnection.on('ready', function(readyResponse){
+        console.log('ready');
+        config.uuid = readyResponse.uuid;
+        config.token = readyResponse.token;
+        configManager.saveConfig(config);
+    });
+
+    skynetConnection.on('message', function(message){
+       if( deviceManager[message.topic] ) {
+           deviceManager[message.topic](message.payload);
+       }
+    });
+};

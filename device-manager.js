@@ -1,4 +1,3 @@
-var npm = require('npm');
 var fs = require('fs-extra');
 var path = require('path');
 var rimraf = require('rimraf');
@@ -32,7 +31,7 @@ module.exports = function(config) {
     fs.mkdirpSync(devicePath);
     fs.mkdirpSync(devicePathTmp);
 
-    exec('echo $PWD && ' + path.join(config.nodePath, 'npm') + ' --prefix=. install ' + device.connector, {cwd: devicePathTmp}, function (error, stdout, stderr) {
+    exec('"' + path.join(config.nodePath, 'npm') + '" --prefix=. install ' + device.connector, {cwd: devicePathTmp}, function (error, stdout, stderr) {
       if (error) {
         console.error(error);
       }
@@ -55,7 +54,7 @@ module.exports = function(config) {
       logFile: devicePath + '/forever.log',
       outFile: devicePath + '/forever.stdout',
       errFile: devicePath + '/forever.stderr',
-      command: path.join(config.nodePath, 'npm')
+      command: '"' + path.join(config.nodePath, 'npm') + '"'
     });
 
     child.on('exit', function () {
