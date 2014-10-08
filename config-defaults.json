@@ -4,5 +4,5 @@
   "tmpPath": "tmp",
   "server" : "meshblu.octoblu.com",
   "port" : 443,
-  "platformPath" : ""
+  "nodePath" : ""
 }
