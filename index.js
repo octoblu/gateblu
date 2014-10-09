@@ -16,7 +16,7 @@ var Gatenu = function(config) {
   skynetConnection.on('notReady', function(data) {
     console.error('notReady', data);
     if (!config.uuid) {
-      skynetConnection.register({type: 'gatenu'}, function(data){
+      skynetConnection.register({}, function(data){
         skynetConnection.identify({uuid: data.uuid, token: data.token});
       });
     }
@@ -28,10 +28,15 @@ var Gatenu = function(config) {
     });
   }
 
+  var updateType = function(){
+    skynetConnection.update({uuid: config.uuid, type: 'genblu'});
+  }
+
   skynetConnection.on('ready', function(data){
     config.uuid  = data.uuid;
     config.token = data.token;
     self.emit('config', config);
+    updateType();
     refreshDevices();
   });
 
