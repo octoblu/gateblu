@@ -1,6 +1,9 @@
 var skynet = require('skynet');
+var util = require('util');
+var EventEmitter = require('events').EventEmitter;
 
-module.exports = function(config) {
+var Gatenu = function(config) {
+  var self = this;
   var skynetConnection = skynet.createConnection({ uuid: config.uuid, token: config.token });
   var deviceManager = require('./device-manager')({
     uuid: config.uuid,
@@ -11,7 +14,7 @@ module.exports = function(config) {
   });
 
   skynetConnection.on('notReady', function(data) {
-    console.log('notReady', data);
+    console.error('notReady', data);
     if (!config.uuid) {
       skynetConnection.register({type: 'gateway'}, function(data){
         skynetConnection.identify({uuid: data.uuid, token: data.token});
@@ -26,6 +29,9 @@ module.exports = function(config) {
   }
 
   skynetConnection.on('ready', function(data){
+    config.uuid  = data.uuid;
+    config.token = data.token;
+    self.emit('config', config);
     refreshDevices();
   });
 
@@ -37,4 +43,7 @@ module.exports = function(config) {
       deviceManager[message.topic](message.payload);
     }
   });
-};
+}
+
+util.inherits(Gatenu, EventEmitter);
+module.exports = Gatenu;
