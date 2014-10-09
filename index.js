@@ -16,7 +16,7 @@ var Gatenu = function(config) {
   skynetConnection.on('notReady', function(data) {
     console.error('notReady', data);
     if (!config.uuid) {
-      skynetConnection.register({type: 'gateway'}, function(data){
+      skynetConnection.register({type: 'gatenu'}, function(data){
         skynetConnection.identify({uuid: data.uuid, token: data.token});
       });
     }
