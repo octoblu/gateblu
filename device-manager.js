@@ -25,7 +25,11 @@ module.exports = function(config) {
   }
 
   function setupAndStartDevice(device) {
-    setupDevice(device, startDevice);
+    setupDevice(device, function(error, device) {
+      if (!error) {
+        startDevice(device);
+      }
+    });
   }
 
   function setupDevice(device, callback) {
@@ -46,12 +50,14 @@ module.exports = function(config) {
     exec('"' + path.join(config.nodePath, 'npm') + '" --prefix=. install ' + device.connector, {cwd: devicePathTmp}, function (error, stdout, stderr) {
       if (error) {
         console.error(error);
+        callback(error);
+        return;
       }
       fs.copySync(path.join(devicePathTmp, 'node_modules', device.connector), devicePath);
       fs.writeFileSync(path.join(devicePath, 'meshblu.json'), JSON.stringify(device));
       rimraf.sync(devicePathTmp);
       if (callback) {
-        callback(device);
+        callback(null, device);
       }
     });
   }
@@ -66,7 +72,7 @@ module.exports = function(config) {
       logFile: devicePath + '/forever.log',
       outFile: devicePath + '/forever.stdout',
       errFile: devicePath + '/forever.stderr',
-      command: '"' + path.join(config.nodePath, 'npm') + '"'
+      command: path.join(config.nodePath, 'npm')
     });
 
     child.on('exit', function () {
