@@ -9,7 +9,7 @@ commander
   .option('--node-path [nodePath]',  'Path for node')
   .parse(process.argv);
 
-if (!commander.uuid) {
+if (!commander.uuid || !commander.token || !commander.tmpPath || !commander.devicePath || !commander.nodePath) {
   commander.help()
 }
 
