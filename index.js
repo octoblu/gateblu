@@ -19,15 +19,22 @@ module.exports = function(config) {
     }
   });
 
-  skynetConnection.on('ready', function(data){
-    skynetConnection.whoami(data, function(data){
+  var refreshDevices = function() {
+    skynetConnection.whoami({}, function(data){
       deviceManager.refreshDevices(data.devices);
     });
+  }
+
+  skynetConnection.on('ready', function(data){
+    refreshDevices();
   });
 
   skynetConnection.on('message', function(message){
-   if( deviceManager[message.topic] ) {
-     deviceManager[message.topic](message.payload);
-   }
- });
+    if (message.topic === 'refresh') {
+      refreshDevices();
+    }
+    if( deviceManager[message.topic] ) {
+      deviceManager[message.topic](message.payload);
+    }
+  });
 };
