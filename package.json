@@ -1,5 +1,5 @@
 {
-  "name": "gatenu-npm",
+  "name": "genblu",
   "version": "1.3.1",
   "description": "",
   "main": "index.js",
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/octoblu/gatenu-npm.git"
+    "url": "https://github.com/octoblu/genblu.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/octoblu/gatenu-npm/issues"
+    "url": "https://github.com/octoblu/genblu/issues"
   },
-  "homepage": "https://github.com/octoblu/gatenu-npm",
+  "homepage": "https://github.com/octoblu/genblu",
   "dependencies": {
     "forever-monitor": "^1.3.0",
     "fs-extra": "^0.12.0",
