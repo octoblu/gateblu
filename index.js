@@ -5,7 +5,7 @@ var DeviceManager = require('./device-manager');
 
 var Gatenu = function(config) {
   var self = this;
-  var skynetConnection = skynet.createConnection({ uuid: config.uuid, token: config.token });
+  var skynetConnection = skynet.createConnection({ uuid: config.uuid, token: config.token, server: config.server, port: config.port });
   var deviceManager = new DeviceManager({
     uuid: config.uuid,
     token: config.token,
@@ -21,7 +21,7 @@ var Gatenu = function(config) {
   }
 
   var updateType = function(){
-    skynetConnection.update({uuid: config.uuid, type: 'genblu'});
+    skynetConnection.update({uuid: config.uuid, type: 'device:genblu'});
   }
 
   deviceManager.on('start', function(device){
