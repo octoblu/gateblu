@@ -1,3 +1,5 @@
+var util = require('util');
+var EventEmitter = require('events').EventEmitter;
 var fs = require('fs-extra');
 var path = require('path');
 var rimraf = require('rimraf');
@@ -5,37 +7,25 @@ var forever = require('forever-monitor');
 var exec = require('child_process').exec;
 var _ = require('lodash');
 
-module.exports = function(config) {
-  var deviceManager = {
-    setupDevice: function (device, callback) {
-      setupDevice(device, callback);
-    },
-    startDevice: function (device) {
-      startDevice(device);
-    },
-    refreshDevices: function(devices) {
-      refreshDevices(devices);
-    }
-  };
+var DeviceManager = function(config) {
+  var self = this;
 
-  return deviceManager;
-
-  function refreshDevices(devices) {
-    _.each(devices, setupAndStartDevice);
+  self.refreshDevices = function(devices) {
+    _.each(devices, self.setupAndStartDevice);
   }
 
-  function setupAndStartDevice(device) {
-    setupDevice(device, function(error, device) {
+  self.setupAndStartDevice = function(device) {
+    self.setupDevice(device, function(error, device) {
       if(error){
         console.error(error.message);
         console.error(error.stack);
         return;
       }
-      startDevice(device);
+      self.startDevice(device);
     });
   }
 
-  function setupDevice(device, callback) {
+  self.setupDevice = function(device, callback) {
     try {
       var devicePath = path.join(config.devicePath, device.uuid);
       var devicePathTmp = path.join(config.tmpPath, device.uuid);
@@ -69,7 +59,7 @@ module.exports = function(config) {
     }
   }
 
-  function startDevice(device) {
+  self.startDevice = function(device) {
     var devicePath = path.join(config.devicePath, device.uuid);
     var child = new (forever.Monitor)('start', {
       max: 3,
@@ -87,5 +77,9 @@ module.exports = function(config) {
     });
 
     child.start();
+    self.emit('start', device);
   }
 };
+
+util.inherits(DeviceManager, EventEmitter);
+module.exports = DeviceManager;

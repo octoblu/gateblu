@@ -1,25 +1,17 @@
 var skynet = require('skynet');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
+var DeviceManager = require('./device-manager');
 
 var Gatenu = function(config) {
   var self = this;
   var skynetConnection = skynet.createConnection({ uuid: config.uuid, token: config.token });
-  var deviceManager = require('./device-manager')({
+  var deviceManager = new DeviceManager({
     uuid: config.uuid,
     token: config.token,
     devicePath: config.devicePath,
     tmpPath: config.tmpPath,
     nodePath: config.nodePath
-  });
-
-  skynetConnection.on('notReady', function(data) {
-    console.error('notReady', data);
-    if (!config.uuid) {
-      skynetConnection.register({}, function(data){
-        skynetConnection.identify({uuid: data.uuid, token: data.token});
-      });
-    }
   });
 
   var refreshDevices = function() {
@@ -31,6 +23,19 @@ var Gatenu = function(config) {
   var updateType = function(){
     skynetConnection.update({uuid: config.uuid, type: 'genblu'});
   }
+
+  deviceManager.on('start', function(device){
+    self.emit('device:start', device);
+  });
+
+  skynetConnection.on('notReady', function(data) {
+    console.error('notReady', data);
+    if (!config.uuid) {
+      skynetConnection.register({}, function(data){
+        skynetConnection.identify({uuid: data.uuid, token: data.token});
+      });
+    }
+  });
 
   skynetConnection.on('ready', function(data){
     config.uuid  = data.uuid;
