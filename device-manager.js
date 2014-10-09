@@ -26,40 +26,47 @@ module.exports = function(config) {
 
   function setupAndStartDevice(device) {
     setupDevice(device, function(error, device) {
-      if (!error) {
-        startDevice(device);
+      if(error){
+        console.error(error.message);
+        console.error(error.stack);
+        return;
       }
+      startDevice(device);
     });
   }
 
   function setupDevice(device, callback) {
-    var devicePath = path.join(config.devicePath, device.uuid);
-    var devicePathTmp = path.join(config.tmpPath, device.uuid);
+    try {
+      var devicePath = path.join(config.devicePath, device.uuid);
+      var devicePathTmp = path.join(config.tmpPath, device.uuid);
 
-    if (fs.existsSync(devicePath)) {
-      rimraf.sync(devicePath);
-    }
-
-    if (fs.existsSync(devicePathTmp)) {
-      rimraf.sync(devicePathTmp);
-    }
-
-    fs.mkdirpSync(devicePath);
-    fs.mkdirpSync(devicePathTmp);
-
-    exec('"' + path.join(config.nodePath, 'npm') + '" --prefix=. install ' + device.connector, {cwd: devicePathTmp}, function (error, stdout, stderr) {
-      if (error) {
-        console.error(error);
-        callback(error);
-        return;
+      if (fs.existsSync(devicePath)) {
+        rimraf.sync(devicePath);
       }
-      fs.copySync(path.join(devicePathTmp, 'node_modules', device.connector), devicePath);
-      fs.writeFileSync(path.join(devicePath, 'meshblu.json'), JSON.stringify(device));
-      rimraf.sync(devicePathTmp);
-      if (callback) {
-        callback(null, device);
+
+      if (fs.existsSync(devicePathTmp)) {
+        rimraf.sync(devicePathTmp);
       }
-    });
+
+      fs.mkdirpSync(devicePath);
+      fs.mkdirpSync(devicePathTmp);
+
+      exec('"' + path.join(config.nodePath, 'npm') + '" --prefix=. install ' + device.connector, {cwd: devicePathTmp}, function (error, stdout, stderr) {
+        if (error) {
+          console.error(error);
+          callback(error);
+          return;
+        }
+        fs.copySync(path.join(devicePathTmp, 'node_modules', device.connector), devicePath);
+        fs.writeFileSync(path.join(devicePath, 'meshblu.json'), JSON.stringify(device));
+        rimraf.sync(devicePathTmp);
+        if (callback) {
+          callback(null, device);
+        }
+      });
+    } catch (error) {
+      callback(error);
+    }
   }
 
   function startDevice(device) {
