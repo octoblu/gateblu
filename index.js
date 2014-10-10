@@ -1,3 +1,5 @@
+'use strict';
+
 var skynet = require('skynet');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
@@ -14,15 +16,20 @@ var Gatenu = function(config) {
     nodePath: config.nodePath
   });
 
-  var refreshDevices = function() {
+  var refreshDevices = function(data) {
+    self.emit('refresh');
+    if(data){
+      deviceManager.refreshDevices(data.devices);
+      return;
+    }
     skynetConnection.whoami({}, function(data){
       deviceManager.refreshDevices(data.devices);
     });
-  }
+  };
 
   var updateType = function(){
     skynetConnection.update({uuid: config.uuid, type: 'device:genblu'});
-  }
+  };
 
   deviceManager.on('start', function(device){
     self.emit('device:start', device);
@@ -47,13 +54,13 @@ var Gatenu = function(config) {
 
   skynetConnection.on('message', function(message){
     if (message.topic === 'refresh') {
-      refreshDevices();
+      refreshDevices(message.payload);
     }
     if( deviceManager[message.topic] ) {
       deviceManager[message.topic](message.payload);
     }
   });
-}
+};
 
 util.inherits(Gatenu, EventEmitter);
 module.exports = Gatenu;
