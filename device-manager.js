@@ -17,7 +17,7 @@ var DeviceManager = function(config) {
   self.setupAndStartDevice = function(device) {
     self.setupDevice(device, function(error, device) {
       if(error){
-        console.error(error.message);
+        console.error(error.message.split('\n').length);
         console.error(error.stack);
         return;
       }
@@ -29,7 +29,7 @@ var DeviceManager = function(config) {
     try {
       var devicePath = path.join(config.devicePath, device.uuid);
       var devicePathTmp = path.join(config.tmpPath, device.uuid);
-
+      var deviceConfig = _.extend({}, device, { server:config.server, port: config.port});
       if (fs.existsSync(devicePath)) {
         rimraf.sync(devicePath);
       }
@@ -43,12 +43,12 @@ var DeviceManager = function(config) {
 
       exec('"' + path.join(config.nodePath, 'npm') + '" --prefix=. install ' + device.connector, {cwd: devicePathTmp}, function (error, stdout, stderr) {
         if (error) {
-          console.error(error);
           callback(error);
           return;
         }
         fs.copySync(path.join(devicePathTmp, 'node_modules', device.connector), devicePath);
-        fs.writeFileSync(path.join(devicePath, 'meshblu.json'), JSON.stringify(device));
+        fs.writeFileSync(path.join(devicePath, 'meshblu.json'), JSON.stringify(deviceConfig, null, 2));
+        
         rimraf.sync(devicePathTmp);
         if (callback) {
           callback(null, device);
