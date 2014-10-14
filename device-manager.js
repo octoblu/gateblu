@@ -29,7 +29,7 @@ var DeviceManager = function(config) {
     try {
       var devicePath = path.join(config.devicePath, device.uuid);
       var devicePathTmp = path.join(config.tmpPath, device.uuid);
-      var deviceConfig = _.extend({}, device, { server:config.server, port: config.port});
+      var deviceConfig = _.extend({}, device, {server:config.server, port: config.port});
       if (fs.existsSync(devicePath)) {
         rimraf.sync(devicePath);
       }
@@ -48,7 +48,7 @@ var DeviceManager = function(config) {
         }
         fs.copySync(path.join(devicePathTmp, 'node_modules', device.connector), devicePath);
         fs.writeFileSync(path.join(devicePath, 'meshblu.json'), JSON.stringify(deviceConfig, null, 2));
-        
+
         rimraf.sync(devicePathTmp);
         if (callback) {
           callback(null, device);

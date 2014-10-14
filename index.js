@@ -13,15 +13,13 @@ var Gatenu = function(config) {
     token: config.token,
     devicePath: config.devicePath,
     tmpPath: config.tmpPath,
-    nodePath: config.nodePath
+    nodePath: config.nodePath,
+    server:  config.server,
+    port:    config.port
   });
 
-  var refreshDevices = function(data) {
+  var refreshDevices = function() {
     self.emit('refresh');
-    if(data){
-      deviceManager.refreshDevices(data.devices);
-      return;
-    }
     skynetConnection.whoami({}, function(data){
       deviceManager.refreshDevices(data.devices);
     });
@@ -54,7 +52,7 @@ var Gatenu = function(config) {
 
   skynetConnection.on('message', function(message){
     if (message.topic === 'refresh') {
-      refreshDevices(message.payload);
+      refreshDevices();
     }
     if( deviceManager[message.topic] ) {
       deviceManager[message.topic](message.payload);
