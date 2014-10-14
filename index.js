@@ -26,7 +26,7 @@ var Gatenu = function(config) {
   };
 
   var updateType = function(){
-    skynetConnection.update({uuid: config.uuid, type: 'device:genblu'});
+    skynetConnection.update({uuid: config.uuid, type: 'device:gateblu'});
   };
 
   deviceManager.on('start', function(device){
