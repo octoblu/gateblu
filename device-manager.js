@@ -13,7 +13,7 @@ var DeviceManager = function(config) {
   var self = this;
 
   self.refreshDevices = function(devices, callback){
-    async.map(devices, self.deviceExists, function(error, devices){
+    async.map(devices || [], self.deviceExists, function(error, devices){
       if(error){ return callback(error); }
 
       devices = _.compact(devices);
