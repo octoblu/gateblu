@@ -7,11 +7,37 @@ var forever = require('forever-monitor');
 var exec = require('child_process').exec;
 var _ = require('lodash');
 var async = require('async');
+var request = require('request');
 
 var DeviceManager = function(config) {
   var self = this;
 
-  self.refreshDevices = function(devices, callback) {
+  self.refreshDevices = function(devices, callback){
+    async.map(devices, self.deviceExists, function(error, devices){
+      if(error){ return callback(error); }
+
+      devices = _.compact(devices);
+      self.emit('update', {devices: devices});
+      self.installDevices(devices, callback);
+    });
+  };
+
+  self.deviceExists = function(device, callback){
+    var authHeaders, deviceUrl;
+
+    authHeaders = {skynet_auth_uuid: device.uuid, skynet_auth_token: device.token};
+    deviceUrl = 'http://' + config.server + ':' + config.port + '/devices/' + device.uuid;
+
+    request({url: deviceUrl, headers: authHeaders}, function(error, response, body){
+      if(error || response.statusCode !== 200){
+        return callback(error, null);
+      }
+
+      callback(null, device);
+    });
+  };
+
+  self.installDevices = function(devices, callback) {
     var connectors = _.uniq(_.pluck(devices, 'connector'));
 
     async.series([
@@ -20,6 +46,7 @@ var DeviceManager = function(config) {
       function(callback){ async.eachSeries(devices, self.setupAndStartDevice, callback); }
     ], callback);
   };
+
 
   self.installConnectors = function(connectors, callback) {
     async.series([

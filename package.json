@@ -1,6 +1,6 @@
 {
   "name": "gateblu",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -21,6 +21,7 @@
     "forever-monitor": "^1.3.0",
     "fs-extra": "^0.12.0",
     "lodash": "^2.4.1",
+    "request": "^2.45.0",
     "rimraf": "^2.2.8",
     "skynet": "^1.1.1"
   },
