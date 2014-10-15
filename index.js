@@ -18,10 +18,10 @@ var Gatenu = function(config) {
     port:    config.port
   });
 
-  var refreshDevices = function() {
+  var refreshDevices = function(callback) {
     self.emit('refresh');
     skynetConnection.whoami({}, function(data){
-      deviceManager.refreshDevices(data.devices);
+      deviceManager.refreshDevices(data.devices, callback);
     });
   };
 
@@ -47,7 +47,11 @@ var Gatenu = function(config) {
     config.token = data.token;
     self.emit('config', config);
     updateType();
-    refreshDevices();
+    refreshDevices(function(error){
+      if (error) {
+        self.emit('error', error);
+      }
+    });
   });
 
   skynetConnection.on('message', function(message){

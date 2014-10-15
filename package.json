@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/octoblu/gateblu",
   "dependencies": {
+    "async": "^0.9.0",
     "forever-monitor": "^1.3.0",
     "fs-extra": "^0.12.0",
     "lodash": "^2.4.1",

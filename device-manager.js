@@ -6,60 +6,76 @@ var rimraf = require('rimraf');
 var forever = require('forever-monitor');
 var exec = require('child_process').exec;
 var _ = require('lodash');
+var async = require('async');
 
 var DeviceManager = function(config) {
   var self = this;
 
-  self.refreshDevices = function(devices) {
-    _.each(devices, self.setupAndStartDevice);
-  }
+  self.refreshDevices = function(devices, callback) {
+    var connectors = _.uniq(_.pluck(devices, 'connector'));
 
-  self.setupAndStartDevice = function(device) {
-    self.setupDevice(device, function(error, device) {
+    self.installConnectors(connectors, function(error){
+      async.eachSeries(devices, self.setupAndStartDevice, callback);
+    });
+  };
+
+  self.installConnectors = function(connectors, callback) {
+    fs.mkdirp(config.tmpPath, function(error){
       if(error){
-        console.error(error.message.split('\n').length);
-        console.error(error.stack);
+        callback(error);
         return;
       }
-      self.startDevice(device);
+
+      async.each(connectors, self.installConnector, callback);
+    });
+  };
+
+  self.installConnector = function(connector, callback) {
+    var cachePath, connectorPath, npmCommand, cmd;
+
+    cachePath     = config.tmpPath;
+    connectorPath = path.join(cachePath, 'node_modules', connector);
+    npmCommand    = 'install';
+    if (fs.existsSync(connectorPath)) {
+      npmCommand = 'update';
+    }
+    cmd = '"' + path.join(config.nodePath, 'npm') + '" --prefix=. ' + npmCommand + ' ' + connector;
+
+    exec(cmd, {cwd: cachePath}, callback);
+  };
+
+  self.setupAndStartDevice = function(device, callback) {
+    self.setupDevice(device, function(error, device) {
+      if(error){
+        callback(error);
+        return;
+      }
+      self.startDevice(device, callback);
     });
   }
 
   self.setupDevice = function(device, callback) {
+    var connectorPath, deviceConfig, devicePath, cachePath, meshbluConfig, meshbluFilename;
     try {
-      var devicePath = path.join(config.devicePath, device.uuid);
-      var devicePathTmp = path.join(config.tmpPath, device.uuid);
-      var deviceConfig = _.extend({}, device, {server:config.server, port: config.port});
-      if (fs.existsSync(devicePath)) {
-        rimraf.sync(devicePath);
-      }
+      devicePath      = path.join(config.devicePath, device.uuid);
+      deviceConfig    = _.extend({}, device, {server:config.server, port: config.port});
+      cachePath       = config.tmpPath;
+      connectorPath   = path.join(cachePath, 'node_modules', device.connector);
+      meshbluFilename = path.join(devicePath, 'meshblu.json');
+      meshbluConfig   = JSON.stringify(deviceConfig, null, 2);
+      copyCommand     = 'ls -r "' + connectorPath + '" "' + devicePath + '"';
 
-      if (fs.existsSync(devicePathTmp)) {
-        rimraf.sync(devicePathTmp);
-      }
-
-      fs.mkdirpSync(devicePath);
-      fs.mkdirpSync(devicePathTmp);
-
-      exec('"' + path.join(config.nodePath, 'npm') + '" --prefix=. install ' + device.connector, {cwd: devicePathTmp}, function (error, stdout, stderr) {
-        if (error) {
-          callback(error);
-          return;
-        }
-        fs.copySync(path.join(devicePathTmp, 'node_modules', device.connector), devicePath);
-        fs.writeFileSync(path.join(devicePath, 'meshblu.json'), JSON.stringify(deviceConfig, null, 2));
-
-        rimraf.sync(devicePathTmp);
-        if (callback) {
-          callback(null, device);
-        }
-      });
+      async.series([
+        function(callback){ rimraf(devicePath, callback); },
+        function(callback){ exec(copyCommand, callback); },
+        function(callback){ fs.writeFile(meshbluFilename, meshbluConfig, callback); }
+      ], callback);
     } catch (error) {
       callback(error);
     }
   }
 
-  self.startDevice = function(device) {
+  self.startDevice = function(device, callback) {
     var devicePath = path.join(config.devicePath, device.uuid);
     var child = new (forever.Monitor)('start', {
       max: 3,
@@ -73,11 +89,12 @@ var DeviceManager = function(config) {
     });
 
     child.on('exit', function () {
-      console.log('The device exited after 3 restarts');
+      self.emit('error', 'The device exited after 3 restarts');
     });
 
     child.start();
     self.emit('start', device);
+    callback();
   }
 };
 
