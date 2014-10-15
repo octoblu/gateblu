@@ -14,20 +14,18 @@ var DeviceManager = function(config) {
   self.refreshDevices = function(devices, callback) {
     var connectors = _.uniq(_.pluck(devices, 'connector'));
 
-    self.installConnectors(connectors, function(error){
-      async.eachSeries(devices, self.setupAndStartDevice, callback);
-    });
+    async.series([
+      function(callback){ self.installConnectors(connectors, callback); },
+      function(callback){ fs.mkdirp(config.devicePath, callback); },
+      function(callback){ async.eachSeries(devices, self.setupAndStartDevice, callback); }
+    ], callback);
   };
 
   self.installConnectors = function(connectors, callback) {
-    fs.mkdirp(config.tmpPath, function(error){
-      if(error){
-        callback(error);
-        return;
-      }
-
-      async.each(connectors, self.installConnector, callback);
-    });
+    async.series([
+      function(callback) { fs.mkdirp(config.tmpPath, callback); },
+      function(callback) { async.each(connectors, self.installConnector, callback); }
+    ], callback);
   };
 
   self.installConnector = function(connector, callback) {
@@ -45,13 +43,10 @@ var DeviceManager = function(config) {
   };
 
   self.setupAndStartDevice = function(device, callback) {
-    self.setupDevice(device, function(error, device) {
-      if(error){
-        callback(error);
-        return;
-      }
-      self.startDevice(device, callback);
-    });
+    async.series([
+      function(callback){ self.setupDevice(device, callback); },
+      function(callback){ self.startDevice(device, callback); },
+    ], callback);
   }
 
   self.setupDevice = function(device, callback) {
@@ -63,15 +58,18 @@ var DeviceManager = function(config) {
       connectorPath   = path.join(cachePath, 'node_modules', device.connector);
       meshbluFilename = path.join(devicePath, 'meshblu.json');
       meshbluConfig   = JSON.stringify(deviceConfig, null, 2);
-      copyCommand     = 'ls -r "' + connectorPath + '" "' + devicePath + '"';
 
-      async.series([
-        function(callback){ rimraf(devicePath, callback); },
-        function(callback){ exec(copyCommand, callback); },
-        function(callback){ fs.writeFile(meshbluFilename, meshbluConfig, callback); }
-      ], callback);
+      rimraf.sync(devicePath);
+      fs.copySync(connectorPath, devicePath);
+      fs.writeFileSync(meshbluFilename, meshbluConfig);
+
+      _.defer(function(){
+        callback();
+      });
     } catch (error) {
-      callback(error);
+      _.defer(function(){
+        callback(error);
+      });
     }
   }
 
