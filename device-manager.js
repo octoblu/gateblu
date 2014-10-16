@@ -38,7 +38,7 @@ var DeviceManager = function(config) {
   };
 
   self.installDevices = function(devices, callback) {
-    var connectors = _.uniq(_.pluck(devices, 'connector'));
+    var connectors = _.compact(_.uniq(_.pluck(devices, 'connector')));
 
     async.series([
       function(callback){ self.installConnectors(connectors, callback); },
