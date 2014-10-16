@@ -24,6 +24,10 @@ var DeviceManager = function(config) {
 
   self.deviceExists = function(device, callback){
     var authHeaders, deviceUrl;
+    if(!device.connector){
+      _.defer(callback);
+      return;
+    }
 
     authHeaders = {skynet_auth_uuid: device.uuid, skynet_auth_token: device.token};
     deviceUrl = 'http://' + config.server + ':' + config.port + '/devices/' + device.uuid;
