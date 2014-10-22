@@ -9,12 +9,15 @@ var _ = require('lodash');
 var async = require('async');
 var request = require('request');
 
-var DeviceManager = function(config) {
+var DeviceManager = function (config) {
   var self = this;
+  var deviceProcesses = [];
 
-  self.refreshDevices = function(devices, callback){
-    async.map(devices || [], self.deviceExists, function(error, devices){
-      if(error){ return callback(error); }
+  self.refreshDevices = function (devices, callback) {
+    async.map(devices || [], self.deviceExists, function (error, devices) {
+      if (error) {
+        return callback(error);
+      }
 
       devices = _.compact(devices);
       self.emit('update', {devices: devices});
@@ -22,9 +25,9 @@ var DeviceManager = function(config) {
     });
   };
 
-  self.deviceExists = function(device, callback){
+  self.deviceExists = function (device, callback) {
     var authHeaders, deviceUrl;
-    if(!device.connector){
+    if (!device.connector) {
       _.defer(callback);
       return;
     }
@@ -32,8 +35,8 @@ var DeviceManager = function(config) {
     authHeaders = {skynet_auth_uuid: device.uuid, skynet_auth_token: device.token};
     deviceUrl = 'http://' + config.server + ':' + config.port + '/devices/' + device.uuid;
 
-    request({url: deviceUrl, headers: authHeaders}, function(error, response, body){
-      if(error || response.statusCode !== 200){
+    request({url: deviceUrl, headers: authHeaders}, function (error, response, body) {
+      if (error || response.statusCode !== 200) {
         return callback(error, null);
       }
 
@@ -41,30 +44,40 @@ var DeviceManager = function(config) {
     });
   };
 
-  self.installDevices = function(devices, callback) {
+  self.installDevices = function (devices, callback) {
     var connectors = _.compact(_.uniq(_.pluck(devices, 'connector')));
 
     async.series([
-      function(callback){ self.installConnectors(connectors, callback); },
-      function(callback){ fs.mkdirp(config.devicePath, callback); },
-      function(callback){ async.eachSeries(devices, self.setupAndStartDevice, callback); }
+      function (callback) {
+        self.installConnectors(connectors, callback);
+      },
+      function (callback) {
+        fs.mkdirp(config.devicePath, callback);
+      },
+      function (callback) {
+        async.eachSeries(devices, self.setupAndStartDevice, callback);
+      }
     ], callback);
   };
 
 
-  self.installConnectors = function(connectors, callback) {
+  self.installConnectors = function (connectors, callback) {
     async.series([
-      function(callback) { fs.mkdirp(config.tmpPath, callback); },
-      function(callback) { async.each(connectors, self.installConnector, callback); }
+      function (callback) {
+        fs.mkdirp(config.tmpPath, callback);
+      },
+      function (callback) {
+        async.each(connectors, self.installConnector, callback);
+      }
     ], callback);
   };
 
-  self.installConnector = function(connector, callback) {
+  self.installConnector = function (connector, callback) {
     var cachePath, connectorPath, npmCommand, cmd;
 
-    cachePath     = config.tmpPath;
+    cachePath = config.tmpPath;
     connectorPath = path.join(cachePath, 'node_modules', connector);
-    npmCommand    = 'install';
+    npmCommand = 'install';
     if (fs.existsSync(connectorPath)) {
       npmCommand = 'update';
     }
@@ -73,38 +86,42 @@ var DeviceManager = function(config) {
     exec(cmd, {cwd: cachePath}, callback);
   };
 
-  self.setupAndStartDevice = function(device, callback) {
+  self.setupAndStartDevice = function (device, callback) {
     async.series([
-      function(callback){ self.setupDevice(device, callback); },
-      function(callback){ self.startDevice(device, callback); },
+      function (callback) {
+        self.setupDevice(device, callback);
+      },
+      function (callback) {
+        self.startDevice(device, callback);
+      },
     ], callback);
-  }
+  };
 
-  self.setupDevice = function(device, callback) {
+  self.setupDevice = function (device, callback) {
     var connectorPath, deviceConfig, devicePath, cachePath, meshbluConfig, meshbluFilename;
     try {
-      devicePath      = path.join(config.devicePath, device.uuid);
-      deviceConfig    = _.extend({}, device, {server:config.server, port: config.port});
-      cachePath       = config.tmpPath;
-      connectorPath   = path.join(cachePath, 'node_modules', device.connector);
+      devicePath = path.join(config.devicePath, device.uuid);
+      deviceConfig = _.extend({}, device, {server: config.server, port: config.port});
+      cachePath = config.tmpPath;
+      connectorPath = path.join(cachePath, 'node_modules', device.connector);
       meshbluFilename = path.join(devicePath, 'meshblu.json');
-      meshbluConfig   = JSON.stringify(deviceConfig, null, 2);
+      meshbluConfig = JSON.stringify(deviceConfig, null, 2);
 
       rimraf.sync(devicePath);
       fs.copySync(connectorPath, devicePath);
       fs.writeFileSync(meshbluFilename, meshbluConfig);
 
-      _.defer(function(){
+      _.defer(function () {
         callback();
       });
     } catch (error) {
-      _.defer(function(){
+      _.defer(function () {
         callback(error);
       });
     }
-  }
+  };
 
-  self.startDevice = function(device, callback) {
+  self.startDevice = function (device, callback) {
     var devicePath = path.join(config.devicePath, device.uuid);
     var child = new (forever.Monitor)('start', {
       max: 3,
@@ -122,9 +139,30 @@ var DeviceManager = function(config) {
     });
 
     child.start();
+    deviceProcesses[device.uuid] = child;
+
     self.emit('start', device);
     callback();
+  };
+
+  self.stopDevice = function (uuid, callback) {
+    var deviceProcess = deviceProcesses[uuid];
+
+    if (!deviceProcess) {
+      return callback();
+    }
+
+    deviceProcess.stop();
+    deviceProcess.on('stop', function() {
+      callback(null, uuid);
+    });
+
+  };
+
+  self.stopDevices = function(callback) {
+    async.each( _.keys(deviceProcesses), self.stopDevice, callback );
   }
+
 };
 
 util.inherits(DeviceManager, EventEmitter);

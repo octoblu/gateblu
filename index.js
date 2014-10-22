@@ -2,6 +2,7 @@
 
 var skynet = require('skynet');
 var util = require('util');
+var _ = require('lodash');
 var EventEmitter = require('events').EventEmitter;
 var DeviceManager = require('./device-manager');
 
@@ -45,7 +46,6 @@ var Gatenu = function(config) {
   });
 
   skynetConnection.on('ready', function(data){
-	  debugger;
     config.uuid  = data.uuid;
     config.token = data.token;
 		console.log('connected!', data);
@@ -66,6 +66,19 @@ var Gatenu = function(config) {
       deviceManager[message.topic](message.payload);
     }
   });
+
+  var cleanup = _.once(function() {
+    process.stdin.resume();
+
+    deviceManager.stopDevices(function(error, uuids){
+      process.exit();
+    });
+  });
+
+  process.on('exit', cleanup);
+  process.on('SIGINT', cleanup);
+  process.on('uncaughtException', cleanup);
+
 };
 
 util.inherits(Gatenu, EventEmitter);
