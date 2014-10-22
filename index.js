@@ -27,9 +27,7 @@ var Gatenu = function(config) {
   };
 
   var updateType = function(){
-	console.log('updating type');  
     skynetConnection.update({uuid: config.uuid, type: 'device:gateblu'});
-		console.log('updated type');
   };
 
   deviceManager.on('start', function(device){
@@ -48,7 +46,6 @@ var Gatenu = function(config) {
   skynetConnection.on('ready', function(data){
     config.uuid  = data.uuid;
     config.token = data.token;
-		console.log('connected!', data);
     self.emit('config', config);
     updateType();
     refreshDevices(function(error){
