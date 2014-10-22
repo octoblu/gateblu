@@ -15,24 +15,25 @@ commander
   var configOptions = {}; 
   
   if(commander.config){
-	  console.log(commander.config);
-	  var commandFile = fs.readFileSync(commander.config)
-  	 
-  } else{
-	   if (!commander.uuid || !commander.token || !commander.tmpPath || !commander.devicePath || !commander.nodePath) {
-   			commander.help()
-		} 
-		else {
-			configOptions = {
-  			  uuid       : commander.uuid,
-  			  token      : commander.token,
-			  devicePath : commander.devicePath,
-			  nodePath   : commander.nodePath,
-			  tmpPath    : commander.tmpPath,
-			  server     : commander.server || 'meshblu.octoblu.com',
-			  port       : commander.port || '80'
-		  };
-		}
+	  configOptions = JSON.parse(fs.readFileSync(commander.config)); 
+	  console.log('Config Options', configOptions);
+  } else {
+	if (!commander.uuid || !commander.token || !commander.tmpPath || !commander.devicePath || !commander.nodePath) {
+		commander.help()
+	} 
+	else {
+		configOptions = {
+		  uuid       : commander.uuid,
+		  token      : commander.token,
+		  devicePath : commander.devicePath,
+		  nodePath   : commander.nodePath || '',
+		  tmpPath    : commander.tmpPath || '',
+		  server     : commander.server || 'meshblu.octoblu.com',
+		  port       : commander.port || '80'
+	  };
+	}
   }
 
-var gatenu = require('./index')(configOptions);
+var GateBlu = require('./index');
+
+var gateblu = new GateBlu(configOptions);
