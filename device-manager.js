@@ -40,7 +40,7 @@ var DeviceManager = function (config) {
         return callback(error, null);
       }
 
-      callback(null, _.extend(body, device));
+      callback(null, _.extend(body.devices[0], device));
     });
   };
 

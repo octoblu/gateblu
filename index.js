@@ -43,6 +43,7 @@ var Gatenu = function(config) {
   };
 
   deviceManager.on('start', function(device){
+    skynetConnection.subscribe({uuid: device.uuid})
     self.emit('device:start', device);
   });
 
@@ -70,6 +71,9 @@ var Gatenu = function(config) {
   skynetConnection.on('message', function(message){
     if (message.topic === 'refresh') {
       refreshDevices();
+    }
+    if (message.topic === 'device-status') {
+      self.emit('device:status', {online: message.payload.online, uuid: message.fromUuid});
     }
     if( deviceManager[message.topic] ) {
       deviceManager[message.topic](message.payload);
