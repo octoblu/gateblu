@@ -20,7 +20,7 @@ var DeviceManager = function (config) {
       }
 
       devices = _.compact(devices);
-      self.emit('update', {devices: devices});
+      self.emit('update', devices);
       self.installDevices(devices, callback);
     });
   };
@@ -35,12 +35,12 @@ var DeviceManager = function (config) {
     authHeaders = {skynet_auth_uuid: device.uuid, skynet_auth_token: device.token};
     deviceUrl = 'http://' + config.server + ':' + config.port + '/devices/' + device.uuid;
 
-    request({url: deviceUrl, headers: authHeaders}, function (error, response, body) {
+    request({url: deviceUrl, headers: authHeaders, json: true}, function (error, response, body) {
       if (error || response.statusCode !== 200) {
         return callback(error, null);
       }
 
-      callback(null, device);
+      callback(null, _.extend(body, device));
     });
   };
 
@@ -136,6 +136,14 @@ var DeviceManager = function (config) {
 
     child.on('exit', function () {
       self.emit('error', 'The device exited after 3 restarts');
+    });
+
+    child.on('stderr', function(data) {
+      self.emit('stderr', data.toString(), device);
+    });
+
+    child.on('stdout', function(data) {
+      self.emit('stdout', data.toString(), device);
     });
 
     child.start();

@@ -19,6 +19,18 @@ var Gatenu = function(config) {
     port:    config.port
   });
 
+  deviceManager.on('stderr', function(data, device){
+    self.emit('stderr', data, device);
+  });
+
+  deviceManager.on('stdout', function(data, device){
+    self.emit('stdout', data, device);
+  });
+
+  deviceManager.on('update', function(devices){
+    self.emit('update', devices);
+  });
+
   var refreshDevices = function(callback) {
     self.emit('refresh');
     skynetConnection.whoami({}, function(data){
