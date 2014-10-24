@@ -43,7 +43,7 @@ var Gatenu = function(config) {
   };
 
   deviceManager.on('start', function(device){
-    skynetConnection.subscribe({uuid: device.uuid})
+    skynetConnection.subscribe({uuid: device.uuid, token: device.token})
     self.emit('device:start', device);
   });
 
@@ -59,13 +59,19 @@ var Gatenu = function(config) {
   skynetConnection.on('ready', function(data){
     config.uuid  = data.uuid;
     config.token = data.token;
-    self.emit('config', config);
+    self.emit('gateblu:config', config);
     updateType();
     refreshDevices(function(error){
       if (error) {
         self.emit('error', error);
       }
     });
+  });
+
+  skynetConnection.on('config', function(data){
+    if (data.uuid !== config.uuid) {
+      self.emit('device:config', data);
+    }
   });
 
   skynetConnection.on('message', function(message){
