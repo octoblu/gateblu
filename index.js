@@ -88,6 +88,9 @@ var Gatenu = function(config) {
     });
   });
 
+  this.stopDevice = deviceManager.stopDevice;
+  this.startDevice = deviceManager.startDevice;
+
 };
 
 util.inherits(Gatenu, EventEmitter);

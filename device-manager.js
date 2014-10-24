@@ -124,7 +124,7 @@ var DeviceManager = function (config) {
   self.startDevice = function (device, callback) {
     var devicePath = path.join(config.devicePath, device.uuid);
     var child = new (forever.Monitor)('start', {
-      max: 3,
+      max: 1,
       silent: true,
       options: [],
       cwd: devicePath,
@@ -132,10 +132,6 @@ var DeviceManager = function (config) {
       outFile: devicePath + '/forever.stdout',
       errFile: devicePath + '/forever.stderr',
       command: path.join(config.nodePath, 'npm')
-    });
-
-    child.on('exit', function () {
-      self.emit('error', 'The device exited after 3 restarts');
     });
 
     child.on('stderr', function(data) {
@@ -150,21 +146,27 @@ var DeviceManager = function (config) {
     deviceProcesses[device.uuid] = child;
 
     self.emit('start', device);
-    callback();
+    if (callback) {
+      callback();
+    }
   };
 
   self.stopDevice = function (uuid, callback) {
     var deviceProcess = deviceProcesses[uuid];
+    callback = callback || _.noop;
 
     if (!deviceProcess) {
       return callback();
     }
 
-    process.kill(deviceProcess.pid, 'SIGINT');
     deviceProcess.on('stop', function() {
       callback(null, uuid);
     });
 
+    if (deviceProcess.running){
+      deviceProcess.killSignal = 'SIGINT';
+      deviceProcess.kill();
+    }
   };
 
   self.stopDevices = function(callback) {
