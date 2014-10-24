@@ -160,7 +160,7 @@ var DeviceManager = function (config) {
       return callback();
     }
 
-    deviceProcess.stop();
+    process.kill(deviceProcess.pid, 'SIGINT');
     deviceProcess.on('stop', function() {
       callback(null, uuid);
     });

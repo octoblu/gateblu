@@ -37,3 +37,7 @@ commander
 var GateBlu = require('./index');
 
 var gateblu = new GateBlu(configOptions);
+process.on('exit', gateblu.cleanup);
+process.on('SIGINT', gateblu.cleanup);
+process.on('uncaughtException', gateblu.cleanup);
+

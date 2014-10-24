@@ -80,17 +80,13 @@ var Gatenu = function(config) {
     }
   });
 
-  var cleanup = _.once(function() {
+  this.cleanup = _.once(function() {
     process.stdin.resume();
 
     deviceManager.stopDevices(function(error, uuids){
       process.exit();
     });
   });
-
-  process.on('exit', cleanup);
-  process.on('SIGINT', cleanup);
-  process.on('uncaughtException', cleanup);
 
 };
 
