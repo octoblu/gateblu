@@ -96,7 +96,12 @@ var Gatenu = function(config) {
 
   this.stopDevice = deviceManager.stopDevice;
   this.startDevice = deviceManager.startDevice;
-
+  this.deleteDevice = function(uuid, token) {
+    deviceManager.stopDevice(uuid);
+    skynetConnection.unregister({uuid: uuid, token: token}, function() {
+      refreshDevices();
+    });
+  };
 };
 
 util.inherits(Gatenu, EventEmitter);

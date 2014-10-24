@@ -171,8 +171,7 @@ var DeviceManager = function (config) {
 
   self.stopDevices = function(callback) {
     async.each( _.keys(deviceProcesses), self.stopDevice, callback );
-  }
-
+  };
 };
 
 util.inherits(DeviceManager, EventEmitter);
