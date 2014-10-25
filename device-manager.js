@@ -14,6 +14,7 @@ var DeviceManager = function (config) {
   var deviceProcesses = [];
 
   self.refreshDevices = function (devices, callback) {
+    callback = callback || _.noop
     async.map(devices || [], self.deviceExists, function (error, devices) {
       if (error) {
         return callback(error);
@@ -26,6 +27,7 @@ var DeviceManager = function (config) {
   };
 
   self.deviceExists = function (device, callback) {
+    callback = callback || _.noop
     var authHeaders, deviceUrl;
     if (!device.connector) {
       _.defer(callback);
@@ -45,6 +47,7 @@ var DeviceManager = function (config) {
   };
 
   self.installDevices = function (devices, callback) {
+    callback = callback || _.noop
     var connectors = _.compact(_.uniq(_.pluck(devices, 'connector')));
 
     async.series([
@@ -62,6 +65,7 @@ var DeviceManager = function (config) {
 
 
   self.installConnectors = function (connectors, callback) {
+    callback = callback || _.noop
     async.series([
       function (callback) {
         fs.mkdirp(config.tmpPath, callback);
@@ -73,6 +77,7 @@ var DeviceManager = function (config) {
   };
 
   self.installConnector = function (connector, callback) {
+    callback = callback || _.noop
     var cachePath, connectorPath, npmCommand, cmd;
 
     cachePath = config.tmpPath;
@@ -87,6 +92,7 @@ var DeviceManager = function (config) {
   };
 
   self.setupAndStartDevice = function (device, callback) {
+    callback = callback || _.noop
     async.series([
       function (callback) {
         self.setupDevice(device, callback);
@@ -98,6 +104,7 @@ var DeviceManager = function (config) {
   };
 
   self.setupDevice = function (device, callback) {
+    callback = callback || _.noop
     var connectorPath, deviceConfig, devicePath, cachePath, meshbluConfig, meshbluFilename;
     try {
       devicePath = path.join(config.devicePath, device.uuid);
@@ -122,6 +129,7 @@ var DeviceManager = function (config) {
   };
 
   self.startDevice = function (device, callback) {
+    callback = callback || _.noop
     var devicePath = path.join(config.devicePath, device.uuid);
     var child = new (forever.Monitor)('start', {
       max: 1,
@@ -146,9 +154,7 @@ var DeviceManager = function (config) {
     deviceProcesses[device.uuid] = child;
 
     self.emit('start', device);
-    if (callback) {
-      callback();
-    }
+    callback();
   };
 
   self.stopDevice = function (uuid, callback) {
@@ -170,6 +176,7 @@ var DeviceManager = function (config) {
   };
 
   self.stopDevices = function(callback) {
+    callback = callback || _.noop
     async.each( _.keys(deviceProcesses), self.stopDevice, callback );
   };
 };

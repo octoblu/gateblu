@@ -32,9 +32,12 @@ var Gatenu = function(config) {
   });
 
   var refreshDevices = function(callback) {
-    self.emit('refresh');
+    callback = callback || _.noop
     skynetConnection.whoami({}, function(data){
-      deviceManager.refreshDevices(data.devices, callback);
+      deviceManager.refreshDevices(data.devices, function(){
+        self.emit('refresh');
+        callback();
+      });
     });
   };
 
@@ -74,7 +77,13 @@ var Gatenu = function(config) {
     }
   });
 
+  skynetConnection.on('unregistered', function(data){
+    deviceManager.stopDevice(data.uuid);
+    refreshDevices();
+  });
+
   skynetConnection.on('message', function(message){
+    console.log(message);
     if (message.topic === 'refresh') {
       refreshDevices();
     }
@@ -102,6 +111,7 @@ var Gatenu = function(config) {
       refreshDevices();
     });
   };
+  this.stopDevices = deviceManager.stopDevices;
 };
 
 util.inherits(Gatenu, EventEmitter);
