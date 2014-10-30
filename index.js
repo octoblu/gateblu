@@ -6,7 +6,7 @@ var _ = require('lodash');
 var EventEmitter = require('events').EventEmitter;
 var DeviceManager = require('./device-manager');
 
-var Gatenu = function(config) {
+var Gateblu = function(config) {
   var self = this;
   var skynetConnection = skynet.createConnection({ uuid: config.uuid, token: config.token, server: config.server, port: config.port });
   var deviceManager = new DeviceManager({
@@ -114,5 +114,5 @@ var Gatenu = function(config) {
   this.stopDevices = deviceManager.stopDevices;
 };
 
-util.inherits(Gatenu, EventEmitter);
-module.exports = Gatenu;
+util.inherits(Gateblu, EventEmitter);
+module.exports = Gateblu;

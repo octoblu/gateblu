@@ -1,43 +1,42 @@
-var commander = require('commander');
-var fs = require('fs'); 
-commander
-  .version(0.1)
-  .option('-u, --uuid [uuid]',  'Meshblu UUID')
-  .option('-c, --config [configPath]', 'Path to config file')
-  .option('-t, --token [token]',  'Meshblu Token')
-  .option('--tmp-path [tmpPath]',  'Ephemeral path')
-  .option('--device-path [devicePath]',  'Where are my devices')
-  .option('--server [server]', 'Meshblu Server')
-  .option('--port [port]', 'Meshblu Port' )
-  .option('--node-path [nodePath]',  'Path for node')
-  .parse(process.argv);
+var fs        = require('fs');
+var Gateblu   = require('./index');
 
-  var configOptions = {}; 
-  
-  if(commander.config){
-	  configOptions = JSON.parse(fs.readFileSync(commander.config)); 
-	  console.log('Config Options', configOptions);
-  } else {
-	if (!commander.uuid || !commander.token || !commander.tmpPath || !commander.devicePath || !commander.nodePath) {
-		commander.help()
-	} 
-	else {
-		configOptions = {
-		  uuid       : commander.uuid,
-		  token      : commander.token,
-		  devicePath : commander.devicePath,
-		  nodePath   : commander.nodePath || '',
-		  tmpPath    : commander.tmpPath || '',
-		  server     : commander.server || 'meshblu.octoblu.com',
-		  port       : commander.port || '80'
-	  };
-	}
+var CONFIG_PATH = './meshblu.json';
+var DEFAULT_OPTIONS = {
+  server:          'meshblu.octoblu.com',
+  port:            '80',
+  devicePath:      'devices',
+  tmpPath:         'tmp'
+};
+
+var GatebluCommand = function(){
+  var self, gateblu;
+  self = this;
+
+  self.getOptions = function(){
+    if(!fs.existsSync(CONFIG_PATH)){
+      self.saveOptions(DEFAULT_OPTIONS);
+    }
+
+    return require(CONFIG_PATH);
+  };
+
+  self.run = function(){
+    var options = self.getOptions();
+
+    gateblu = new Gateblu(options);
+    gateblu.on('gateblu:config', self.saveOptions);
+
+    process.on('exit',              gateblu.cleanup);
+    process.on('SIGINT',            gateblu.cleanup);
+    process.on('uncaughtException', gateblu.cleanup);
+  };
+
+  self.saveOptions = function(options){
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(options, null, 2));
+    console.log("Saved config to meshblu.json");
   }
+};
 
-var GateBlu = require('./index');
-
-var gateblu = new GateBlu(configOptions);
-process.on('exit', gateblu.cleanup);
-process.on('SIGINT', gateblu.cleanup);
-process.on('uncaughtException', gateblu.cleanup);
-
+var gatebluCommand  = new GatebluCommand();
+gatebluCommand.run();
