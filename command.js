@@ -3,10 +3,11 @@ var Gateblu   = require('./index');
 
 var CONFIG_PATH = './meshblu.json';
 var DEFAULT_OPTIONS = {
-  server:          'meshblu.octoblu.com',
-  port:            '80',
-  devicePath:      'devices',
-  tmpPath:         'tmp'
+  server:     'meshblu.octoblu.com',
+  port:       '80',
+  nodePath:   '',
+  devicePath: 'devices',
+  tmpPath:    'tmp'
 };
 
 var GatebluCommand = function(){

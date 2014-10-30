@@ -83,7 +83,6 @@ var Gateblu = function(config) {
   });
 
   skynetConnection.on('message', function(message){
-    console.log(message);
     if (message.topic === 'refresh') {
       refreshDevices();
     }
