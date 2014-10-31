@@ -1,4 +1,5 @@
 var fs        = require('fs');
+var debug     = require('debug')('gateblu:command');
 var Gateblu   = require('./index');
 
 var CONFIG_PATH = './meshblu.json';
@@ -35,7 +36,7 @@ var GatebluCommand = function(){
 
   self.saveOptions = function(options){
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(options, null, 2));
-    console.log("Saved config to meshblu.json");
+    debug("Saved config to meshblu.json");
   }
 };
 

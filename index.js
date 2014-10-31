@@ -1,8 +1,9 @@
 'use strict';
 
-var skynet = require('skynet');
-var util = require('util');
-var _ = require('lodash');
+var skynet       = require('skynet');
+var util         = require('util');
+var _            = require('lodash');
+var debug        = require('debug')('gateblu:index');
 var EventEmitter = require('events').EventEmitter;
 var DeviceManager = require('./device-manager');
 
@@ -34,6 +35,8 @@ var Gateblu = function(config) {
   var refreshDevices = function(callback) {
     callback = callback || _.noop
     skynetConnection.whoami({}, function(data){
+      debug('whoami: ', data);
+
       deviceManager.refreshDevices(data.devices, function(){
         self.emit('refresh');
         callback();
@@ -83,6 +86,7 @@ var Gateblu = function(config) {
   });
 
   skynetConnection.on('message', function(message){
+    debug('message received: ', message);
     if (message.topic === 'refresh') {
       refreshDevices();
     }
