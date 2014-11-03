@@ -83,9 +83,9 @@ var DeviceManager = function (config) {
   };
 
   self.installConnector = function (connector, callback) {
+    var cachePath, connectorPath, npmCommand, cmd, prefix;
     callback = callback || _.noop;
     debug('installConnector', connector);
-    var cachePath, connectorPath, npmCommand, cmd;
 
     cachePath = config.tmpPath;
     connectorPath = path.join(cachePath, 'node_modules', connector);
@@ -93,7 +93,14 @@ var DeviceManager = function (config) {
     if (fs.existsSync(connectorPath)) {
       npmCommand = 'update';
     }
-    cmd = '"' + path.join(config.nodePath, 'npm') + '" --prefix=. ' + npmCommand + ' ' + connector;
+
+    if (process.platform === 'win32') {
+      prefix = 'cmd.exe /c';
+    } else {
+      prefix = '/bin/sh -c';
+    }
+
+    cmd = prefix + ' "' + path.join(config.nodePath, 'npm') + '" --prefix=. ' + npmCommand + ' ' + connector;
 
     exec(cmd, {cwd: cachePath}, callback);
   };
