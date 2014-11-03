@@ -145,10 +145,17 @@ var DeviceManager = function (config) {
   };
 
   self.startDevice = function (device, callback) {
+    var devicePath, child, pathSep;
     callback = callback || _.noop;
     debug('startDevice', device);
-    var devicePath = path.join(config.devicePath, device.uuid);
-    var child = new (forever.Monitor)('start', {
+
+    devicePath = path.join(config.devicePath, device.uuid);
+    if (process.platform === 'win32') {
+      pathSep = ';';
+    } else {
+      pathSep = ':';
+    }
+    child = new (forever.Monitor)('command.js', {
       max: 1,
       silent: true,
       options: [],
@@ -156,7 +163,7 @@ var DeviceManager = function (config) {
       logFile: devicePath + '/forever.log',
       outFile: devicePath + '/forever.stdout',
       errFile: devicePath + '/forever.stderr',
-      command: path.join(config.nodePath, 'npm')
+      env: {PATH: process.env.PATH + pathSep + config.nodePath}
     });
 
     child.on('stderr', function(data) {
