@@ -8,6 +8,7 @@ var exec = require('child_process').exec;
 var _ = require('lodash');
 var async = require('async');
 var request = require('request');
+var debug     = require('debug')('gateblu:deviceManager');
 
 var DeviceManager = function (config) {
   var self = this;
@@ -15,6 +16,7 @@ var DeviceManager = function (config) {
 
   self.refreshDevices = function (devices, callback) {
     self.stopDevices(function(){
+      debug('refreshDevices', devices);
       callback = callback || _.noop;
       async.map(devices || [], self.deviceExists, function (error, devices) {
         if (error) {
@@ -38,18 +40,20 @@ var DeviceManager = function (config) {
 
     authHeaders = {skynet_auth_uuid: device.uuid, skynet_auth_token: device.token};
     deviceUrl = 'http://' + config.server + ':' + config.port + '/devices/' + device.uuid;
-
+    debug('requesting device', deviceUrl);
     request({url: deviceUrl, headers: authHeaders, json: true}, function (error, response, body) {
       if (error || response.statusCode !== 200) {
+        debug('device does not exist', deviceUrl);
         return callback(error, null);
       }
-
+      debug('device exists', deviceUrl);
       callback(null, _.extend(body.devices[0], device));
     });
   };
 
   self.installDevices = function (devices, callback) {
     callback = callback || _.noop;
+    debug('installDevices', devices);
     var connectors = _.compact(_.uniq(_.pluck(devices, 'connector')));
 
     async.series([
@@ -67,6 +71,7 @@ var DeviceManager = function (config) {
 
   self.installConnectors = function (connectors, callback) {
     callback = callback || _.noop;
+    debug('installConnectors', connectors);
     async.series([
       function (callback) {
         fs.mkdirp(config.tmpPath, callback);
@@ -79,6 +84,7 @@ var DeviceManager = function (config) {
 
   self.installConnector = function (connector, callback) {
     callback = callback || _.noop;
+    debug('installConnector', connector);
     var cachePath, connectorPath, npmCommand, cmd;
 
     cachePath = config.tmpPath;
@@ -94,6 +100,7 @@ var DeviceManager = function (config) {
 
   self.setupAndStartDevice = function (device, callback) {
     callback = callback || _.noop;
+    debug('setupAndStartDevice', device);
     async.series([
       function (callback) {
         self.setupDevice(device, callback);
@@ -106,6 +113,7 @@ var DeviceManager = function (config) {
 
   self.setupDevice = function (device, callback) {
     callback = callback || _.noop;
+    debug('setupDevice', device);
     var connectorPath, deviceConfig, devicePath, cachePath, meshbluConfig, meshbluFilename;
     try {
       devicePath = path.join(config.devicePath, device.uuid);
@@ -131,6 +139,7 @@ var DeviceManager = function (config) {
 
   self.startDevice = function (device, callback) {
     callback = callback || _.noop;
+    debug('startDevice', device);
     var devicePath = path.join(config.devicePath, device.uuid);
     var child = new (forever.Monitor)('start', {
       max: 1,
@@ -161,6 +170,7 @@ var DeviceManager = function (config) {
   self.stopDevice = function (uuid, callback) {
     var deviceProcess = deviceProcesses[uuid];
     callback = callback || _.noop;
+    debug('stopDevice', uuid);
 
     if (!deviceProcess) {
       return callback(null, uuid);
@@ -180,6 +190,7 @@ var DeviceManager = function (config) {
 
   self.stopDevices = function(callback) {
     callback = callback || _.noop;
+    debug('stopDevices');
     async.each( _.keys(deviceProcesses), self.stopDevice, callback );
   };
 };

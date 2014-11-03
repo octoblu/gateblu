@@ -49,12 +49,14 @@ var Gateblu = function(config) {
   };
 
   deviceManager.on('start', function(device){
+    debug('start', device);
     skynetConnection.subscribe({uuid: device.uuid, token: device.token})
     self.emit('device:start', device);
   });
 
   skynetConnection.on('notReady', function(data) {
     console.error('notReady', data);
+    debug('notReady', data);
     if (!config.uuid) {
       skynetConnection.register({}, function(data){
         skynetConnection.identify({uuid: data.uuid, token: data.token});
@@ -67,6 +69,7 @@ var Gateblu = function(config) {
     config.token = data.token;
     self.emit('gateblu:config', config);
     updateType();
+    debug('ready', data);
     refreshDevices(function(error){
       if (error) {
         self.emit('error', error);
@@ -75,12 +78,14 @@ var Gateblu = function(config) {
   });
 
   skynetConnection.on('config', function(data){
+    debug('config', data);
     if (data.uuid !== config.uuid) {
       self.emit('device:config', data);
     }
   });
 
   skynetConnection.on('unregistered', function(data){
+    debug('unregistered', data);
     deviceManager.stopDevice(data.uuid);
     refreshDevices();
   });
@@ -99,6 +104,7 @@ var Gateblu = function(config) {
   });
 
   this.cleanup = _.once(function() {
+    debug('cleanup');
     process.stdin.resume();
 
     deviceManager.stopDevices(function(error, uuids){
@@ -109,6 +115,7 @@ var Gateblu = function(config) {
   this.stopDevice = deviceManager.stopDevice;
   this.startDevice = deviceManager.startDevice;
   this.deleteDevice = function(uuid, token) {
+    debug('deleteDevice', uuid);
     deviceManager.stopDevice(uuid);
     skynetConnection.unregister({uuid: uuid, token: token}, function() {
       refreshDevices();
