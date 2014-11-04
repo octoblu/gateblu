@@ -16,7 +16,7 @@ var DeviceManager = function (config) {
 
   self.refreshDevices = function (devices, callback) {
     self.stopDevices(function(){
-      debug('refreshDevices', devices);
+      debug('refreshDevices', _.pluck(devices, 'uuid'));
       callback = callback || _.noop;
       async.map(devices || [], self.deviceExists, function (error, devices) {
         if (error) {
@@ -53,7 +53,7 @@ var DeviceManager = function (config) {
 
   self.installDevices = function (devices, callback) {
     callback = callback || _.noop;
-    debug('installDevices', devices);
+    debug('installDevices', _.pluck(devices, 'uuid'));
     var connectors = _.compact(_.uniq(_.pluck(devices, 'connector')));
 
     async.series([
@@ -97,7 +97,7 @@ var DeviceManager = function (config) {
     if (process.platform === 'win32') {
       prefix = 'cmd.exe /c';
     } else {
-      prefix = '/bin/sh -c';
+      prefix = '';
     }
 
     cmd = prefix + ' "' + path.join(config.nodePath, 'npm') + '" --prefix=. ' + npmCommand + ' ' + connector;
@@ -107,7 +107,7 @@ var DeviceManager = function (config) {
 
   self.setupAndStartDevice = function (device, callback) {
     callback = callback || _.noop;
-    debug('setupAndStartDevice', device);
+    debug('setupAndStartDevice', device.uuid);
     async.series([
       function (callback) {
         self.setupDevice(device, callback);
@@ -120,7 +120,7 @@ var DeviceManager = function (config) {
 
   self.setupDevice = function (device, callback) {
     callback = callback || _.noop;
-    debug('setupDevice', device);
+    debug('setupDevice', device.uuid);
     var connectorPath, deviceConfig, devicePath, cachePath, meshbluConfig, meshbluFilename;
     try {
       devicePath = path.join(config.devicePath, device.uuid);
@@ -147,7 +147,7 @@ var DeviceManager = function (config) {
   self.startDevice = function (device, callback) {
     var devicePath, child, pathSep;
     callback = callback || _.noop;
-    debug('startDevice', device);
+    debug('startDevice', device.uuid);
 
     devicePath = path.join(config.devicePath, device.uuid);
     if (process.platform === 'win32') {

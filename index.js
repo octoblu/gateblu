@@ -49,7 +49,7 @@ var Gateblu = function(config) {
   };
 
   deviceManager.on('start', function(device){
-    debug('start', device);
+    debug('start', device.uuid);
     skynetConnection.subscribe({uuid: device.uuid, token: device.token})
     self.emit('device:start', device);
   });
