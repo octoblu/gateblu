@@ -100,7 +100,7 @@ var DeviceManager = function (config) {
       prefix = '';
     }
 
-    cmd = prefix + '"' + path.join(config.nodePath, 'npm') + '" --prefix=. ' + npmCommand + ' ' + connector;
+    cmd = prefix + 'npm --prefix=. ' + npmCommand + ' ' + connector;
     debug('executing cmd', cmd);
 
     exec(cmd, {cwd: cachePath}, function(error, stdout, stderr){
@@ -168,8 +168,6 @@ var DeviceManager = function (config) {
       pathSep = ':';
     }
 
-    debug('forever command', path.join(config.nodePath, 'node'));
-
     var foreverOptions = {
       max: 1,
       silent: true,
@@ -178,9 +176,8 @@ var DeviceManager = function (config) {
       logFile: devicePath + '/forever.log',
       outFile: devicePath + '/forever.stdout',
       errFile: devicePath + '/forever.stderr',
-      command: path.join(config.nodePath, 'node'),
-      checkFile: false,
-      env: {"PATH": config.nodePath + pathSep + process.env.PATH }
+      command: 'node',
+      checkFile: false
     };
 
     if (process.platform === 'win32') {
