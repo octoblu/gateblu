@@ -95,14 +95,26 @@ var DeviceManager = function (config) {
     }
 
     if (process.platform === 'win32') {
-      prefix = 'cmd.exe /c';
+      prefix = 'cmd.exe /c ';
     } else {
       prefix = '';
     }
 
-    cmd = prefix + ' "' + path.join(config.nodePath, 'npm') + '" --prefix=. ' + npmCommand + ' ' + connector;
+    cmd = prefix + '"' + path.join(config.nodePath, 'npm') + '" --prefix=. ' + npmCommand + ' ' + connector;
+    debug('executing cmd', cmd);
 
-    exec(cmd, {cwd: cachePath}, callback);
+    exec(cmd, {cwd: cachePath}, function(error, stdout, stderr){
+      if (error) {
+        console.error(error);
+        debug('forever error:', error);
+        callback();
+        return;
+      }
+
+      debug('forever stdout', stdout);
+      debug('forever stderr', stderr);
+      callback();
+    });
   };
 
   self.setupAndStartDevice = function (device, callback) {
@@ -129,7 +141,7 @@ var DeviceManager = function (config) {
       connectorPath = path.join(cachePath, 'node_modules', device.connector);
       meshbluFilename = path.join(devicePath, 'meshblu.json');
       meshbluConfig = JSON.stringify(deviceConfig, null, 2);
-
+      debug('copying files', devicePath);
       rimraf.sync(devicePath);
       fs.copySync(connectorPath, devicePath);
       fs.writeFileSync(meshbluFilename, meshbluConfig);
@@ -155,7 +167,10 @@ var DeviceManager = function (config) {
     } else {
       pathSep = ':';
     }
-    child = new (forever.Monitor)('command.js', {
+
+    debug('forever command', path.join(config.nodePath, 'node'));
+
+    var foreverOptions = {
       max: 1,
       silent: true,
       options: [],
@@ -163,17 +178,28 @@ var DeviceManager = function (config) {
       logFile: devicePath + '/forever.log',
       outFile: devicePath + '/forever.stdout',
       errFile: devicePath + '/forever.stderr',
-      env: {PATH: process.env.PATH + pathSep + config.nodePath}
-    });
+      command: path.join(config.nodePath, 'node'),
+      checkFile: false,
+      env: {"PATH": config.nodePath + pathSep + process.env.PATH }
+    };
+
+    if (process.platform === 'win32') {
+      delete foreverOptions.command;
+    }
+
+    child = new (forever.Monitor)('command.js', foreverOptions);
 
     child.on('stderr', function(data) {
+      debug('stderr', device.uuid, data.toString());
       self.emit('stderr', data.toString(), device);
     });
 
     child.on('stdout', function(data) {
+      debug('stdout', device.uuid, data.toString());
       self.emit('stdout', data.toString(), device);
     });
 
+    debug('forever', device.uuid, 'starting');
     child.start();
     deviceProcesses[device.uuid] = child;
 
