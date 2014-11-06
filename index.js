@@ -36,6 +36,7 @@ var Gateblu = function(config) {
     callback = callback || _.noop
     skynetConnection.whoami({}, function(data){
       debug('whoami: ', data);
+      self.emit('gateblu:orig:config', data);
 
       deviceManager.refreshDevices(data.devices, function(){
         self.emit('refresh');
@@ -79,7 +80,9 @@ var Gateblu = function(config) {
 
   skynetConnection.on('config', function(data){
     debug('config', data);
-    if (data.uuid !== config.uuid) {
+    if (data.uuid === config.uuid) {
+      self.emit('gateblu:orig:config', data);
+    } else {
       self.emit('device:config', data);
     }
   });
