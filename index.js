@@ -65,6 +65,11 @@ var Gateblu = function(config) {
     }
   });
 
+  skynetConnection.on('disconnect', function(){
+    debug('disconnected');
+    self.emit('disconnected');
+  });
+
   skynetConnection.on('ready', function(data){
     config.uuid  = data.uuid;
     config.token = data.token;
