@@ -74,7 +74,7 @@ var DeviceManager = function (config) {
     debug('installConnectors', connectors);
     async.series([
       function (callback) {
-        fs.mkdirp(config.tmpPath, callback);
+        fs.mkdirp(path.join(config.tmpPath, 'node_modules'), callback);
       },
       function (callback) {
         async.each(connectors, self.installConnector, callback);
