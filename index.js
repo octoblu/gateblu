@@ -122,7 +122,6 @@ var Gateblu = function(config) {
       return self.emit('unregistered');
     }
 
-    deviceManager.stopDevice(data.uuid);
     refreshDevices();
   });
 
@@ -143,16 +142,20 @@ var Gateblu = function(config) {
     debug('cleanup');
     process.stdin.resume();
 
-    deviceManager.stopDevices(function(error, uuids){
-      process.exit();
-    });
+    try {
+      deviceManager.stopDevices(function(error, uuids){
+        process.exit();
+      });
+    } catch (error) {
+      console.error(error.message, error.stack);
+      process.exit()
+    }
   });
 
   this.stopDevice = deviceManager.stopDevice;
   this.startDevice = deviceManager.startDevice;
   this.deleteDevice = function(uuid, token) {
     debug('deleteDevice', uuid);
-    deviceManager.stopDevice(uuid);
     skynetConnection.unregister({uuid: uuid, token: token}, function() {
       refreshDevices();
     });
