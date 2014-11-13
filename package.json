@@ -1,6 +1,6 @@
 {
   "name": "gateblu",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -25,7 +25,7 @@
     "lodash": "^2.4.1",
     "request": "^2.45.0",
     "rimraf": "^2.2.8",
-    "skynet": "^1.6.1"
+    "skynet": "^1.8.1"
   },
   "optionalDependencies": {
     "commander": "^2.3.0"
