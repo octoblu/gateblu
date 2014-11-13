@@ -34,7 +34,7 @@ var GatebluCommand = function(){
       debug('exit', error);
       gateblu.cleanup();
     });
-    process.on('SIGINT',            function(error){
+    process.on('SIGINT', function(error){
       console.error(error.message, error.stack);
       debug('SIGINT', error);
       gateblu.cleanup();
@@ -47,8 +47,9 @@ var GatebluCommand = function(){
   };
 
   self.saveOptions = function(options){
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(options, null, 2));
-    debug("Saved config to meshblu.json");
+    var optionsJSON = JSON.stringify(options, null, 2);
+    fs.writeFileSync(CONFIG_PATH, optionsJSON);
+    debug("saveOptions", "\n", optionsJSON);
   }
 };
 

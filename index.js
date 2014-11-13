@@ -122,7 +122,9 @@ var Gateblu = function(config) {
       return self.emit('unregistered');
     }
 
-    refreshDevices();
+    deviceManager.stopDevice(data.uuid, function(error){
+      refreshDevices();
+    });
   });
 
   skynetConnection.on('message', function(message){

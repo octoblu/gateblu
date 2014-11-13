@@ -12,21 +12,26 @@ var debug     = require('debug')('gateblu:deviceManager');
 
 var DeviceManager = function (config) {
   var self = this;
-  var deviceProcesses = [];
+  var deviceProcesses = {};
 
   self.refreshDevices = function (devices, callback) {
-    self.stopDevices(function(){
-      debug('refreshDevices', _.pluck(devices, 'uuid'));
-      callback = callback || _.noop;
-      async.map(devices || [], self.deviceExists, function (error, devices) {
-        if (error) {
-          return callback(error);
-        }
+    debug('refreshDevices', _.pluck(devices, 'uuid'));
+    callback = callback || _.noop;
 
-        devices = _.compact(devices);
-        self.emit('update', devices);
-        self.installDevices(devices, callback);
+    async.map(devices || [], self.deviceExists, function (error, devices) {
+      if (error) {
+        return callback(error);
+      }
+
+      devices = _.compact(devices);
+
+      var newDevices = _.reject(devices, function(device){
+        return deviceProcesses[device.uuid];
       });
+
+      newDevices = _.compact(newDevices);
+      self.emit('update', devices);
+      self.installDevices(newDevices, callback);
     });
   };
 
