@@ -25,6 +25,9 @@ var DeviceManager = function (config) {
 
       devices = _.compact(devices);
 
+      var uuidsToStop = _.difference(_.keys(deviceProcesses), _.pluck(devices, 'uuid'));
+      _.each(uuidsToStop, self.stopDevice);
+
       var newDevices = _.reject(devices, function(device){
         return deviceProcesses[device.uuid];
       });
