@@ -222,6 +222,7 @@ var DeviceManager = function (config) {
     }
 
     deviceProcess.on('stop', function() {
+      delete deviceProcesses[uuid];
       callback(null, uuid);
     });
 
@@ -229,6 +230,7 @@ var DeviceManager = function (config) {
       deviceProcess.killSignal = 'SIGINT';
       deviceProcess.kill();
     } else {
+      delete deviceProcesses[uuid];
       callback(null, uuid);
     }
   };
