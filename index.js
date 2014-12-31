@@ -5,20 +5,10 @@ var util         = require('util');
 var _            = require('lodash');
 var debug        = require('debug')('gateblu:index');
 var EventEmitter = require('events').EventEmitter;
-var DeviceManager = require('./device-manager');
 
-var Gateblu = function(config) {
+var Gateblu = function(config, deviceManager) {
   var self = this;
   var skynetConnection = skynet.createConnection({ uuid: config.uuid, token: config.token, server: config.server, port: config.port });
-  var deviceManager = new DeviceManager({
-    uuid: config.uuid,
-    token: config.token,
-    devicePath: config.devicePath,
-    tmpPath: config.tmpPath,
-    nodePath: config.nodePath,
-    server:  config.server,
-    port:    config.port
-  });
 
   deviceManager.on('stderr', function(data, device){
     self.emit('stderr', data, device);
@@ -33,7 +23,7 @@ var Gateblu = function(config) {
   });
 
   var refreshDevices = function(callback) {
-    callback = callback || _.noop
+    callback = callback || _.noop;
     skynetConnection.whoami({}, function(data){
       debug('whoami: ', data);
       self.emit('gateblu:orig:config', data);
@@ -51,7 +41,7 @@ var Gateblu = function(config) {
       debug("registered", data);
       skynetConnection.identify({uuid: data.uuid, token: data.token});
     });
-  }
+  };
 
   var updateType = function(){
     skynetConnection.update({uuid: config.uuid, type: 'device:gateblu'});
@@ -150,7 +140,7 @@ var Gateblu = function(config) {
       });
     } catch (error) {
       console.error(error.message, error.stack);
-      process.exit()
+      process.exit();
     }
   });
 
