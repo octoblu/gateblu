@@ -1,6 +1,6 @@
 'use strict';
 
-var skynet       = require('skynet');
+var meshblu      = require('meshblu');
 var util         = require('util');
 var _            = require('lodash');
 var debug        = require('debug')('gateblu:index');
@@ -9,7 +9,7 @@ var DeviceManager = require('./device-manager');
 
 var Gateblu = function(config) {
   var self = this;
-  var skynetConnection = skynet.createConnection({ uuid: config.uuid, token: config.token, server: config.server, port: config.port });
+  var skynetConnection = meshblu.createConnection({ uuid: config.uuid, token: config.token, server: config.server, port: config.port });
   var deviceManager = new DeviceManager({
     uuid: config.uuid,
     token: config.token,
