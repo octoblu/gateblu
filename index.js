@@ -9,15 +9,6 @@ var EventEmitter = require('events').EventEmitter;
 var Gateblu = function(config, deviceManager) {
   var self = this;
   var skynetConnection = meshblu.createConnection({ uuid: config.uuid, token: config.token, server: config.server, port: config.port });
-  var deviceManager = new DeviceManager({
-    uuid: config.uuid,
-    token: config.token,
-    devicePath: config.devicePath,
-    tmpPath: config.tmpPath,
-    nodePath: config.nodePath,
-    server:  config.server,
-    port:    config.port
-  });
 
   deviceManager.on('stderr', function(data, device){
     self.emit('stderr', data, device);
