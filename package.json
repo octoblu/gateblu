@@ -1,6 +1,6 @@
 {
   "name": "gateblu",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,7 @@
     "lodash": "^2.4.1",
     "request": "^2.45.0",
     "rimraf": "^2.2.8",
-    "meshblu": "^1.9.0"
+    "meshblu": "^1.10.0"
   },
   "optionalDependencies": {
     "commander": "^2.3.0"
