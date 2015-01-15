@@ -35,6 +35,24 @@ var Gateblu = function(config, deviceManager) {
     });
   };
 
+  var refreshDevice = function(device, callback) {
+    skynetConnection.devices({
+      "uuid" : device.uuid
+    }, function(data){
+
+      if(!data || !data.devices || !data.devices.length) {
+        return;
+      }
+
+      var device = data.devices[0];
+      deviceManager.stopDevice(device.uuid, function(){
+        deviceManager.startDevice(device);
+      });
+
+    });
+  };
+
+
   var register = function(){
     debug("registering");
     skynetConnection.register({}, function(data){
@@ -125,6 +143,11 @@ var Gateblu = function(config, deviceManager) {
     if (message.topic === 'device-status') {
       self.emit('device:status', {online: message.payload.online, uuid: message.fromUuid});
     }
+
+    if (message.topic === 'refresh-device') {
+      refreshDevice({uuid: message.deviceUuid, token: message.deviceToken});
+    }
+
     if( deviceManager[message.topic] ) {
       deviceManager[message.topic](message.payload);
     }
