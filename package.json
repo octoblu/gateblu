@@ -1,10 +1,10 @@
 {
   "name": "gateblu",
-  "version": "3.0.0",
+  "version": "3.0.3",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -24,9 +24,16 @@
     "lodash": "^2.4.1",
     "request": "^2.45.0",
     "rimraf": "^2.2.8",
-    "skynet": "^1.8.1"
+    "meshblu": "^1.10.0"
   },
   "optionalDependencies": {
     "commander": "^2.3.0"
+  },
+  "devDependencies": {
+    "chai": "^1.10.0",
+    "coffee-script": "^1.8.0",
+    "mocha": "^2.1.0",
+    "sinon": "^1.12.2",
+    "sinon-chai": "^2.6.0"
   }
 }
