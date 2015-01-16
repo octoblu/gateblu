@@ -19,3 +19,5 @@ Sample `meshblu.json`
   "token": "0kmpejq8ul434n29pbti61d2q4vg3nmi"
 }
 ```
+
+--- Octoblu is awesome ---
