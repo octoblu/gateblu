@@ -1,2 +1,2 @@
 'use strict';
-module.exports = require('./lib/gateblu');
+module.exports = require('./lib');
