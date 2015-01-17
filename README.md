@@ -1,5 +1,8 @@
-gateblu
-==============
+# gateblu
+
+[![Build Status](https://travis-ci.org/octoblu/gateblu.svg?branch=master)](https://travis-ci.org/octoblu/gateblu)
+[![Code Climate](https://codeclimate.com/github/octoblu/gateblu/badges/gpa.svg)](https://codeclimate.com/github/octoblu/gateblu)
+[![Test Coverage](https://codeclimate.com/github/octoblu/gateblu/badges/coverage.svg)](https://codeclimate.com/github/octoblu/gateblu)
 
 Gateblu will automatically register itself with meshblu.octoblu.com on startup.
 
