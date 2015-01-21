@@ -19,7 +19,7 @@
   "dependencies": {
     "debug": "^2.1.0",
     "lodash": "^2.4.1",
-    "meshblu": "^1.10.0"
+    "meshblu": "^1.12.0"
   },
   "optionalDependencies": {
     "commander": "^2.3.0"
