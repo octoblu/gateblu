@@ -30,3 +30,4 @@ meshblu.json
 tmp
 devices
 .npmrc
+*.sublime-workspace
