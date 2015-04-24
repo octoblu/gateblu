@@ -15,9 +15,11 @@ describe 'Gateblu', ->
   describe 'when receiving a device-start', ->
     beforeEach ->
       @sut.startDevice = sinon.stub()
-      @fakeConnection.emit 'message', topic: 'device-start', deviceUuid: '36c690a3-0f61-4b1e-8922-ba0e8c56ddfc'
+      @fakeConnection.emit 'message',
+        topic: 'device-start'
+        payload: '36c690a3-0f61-4b1e-8922-ba0e8c56ddfc'
 
-    it 'should call stopDevice', ->
+    it 'should call startDevice', ->
       expect(@sut.startDevice).to.have.been.calledWith '36c690a3-0f61-4b1e-8922-ba0e8c56ddfc'
 
   describe 'when receiving a device-stop', ->
