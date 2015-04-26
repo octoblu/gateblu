@@ -1,10 +1,10 @@
 {
   "name": "gateblu",
-  "version": "3.3.2",
+  "version": "3.3.3",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec"
+    "test": "istanbul cover mocha --report lcovonly -- -R spec"
   },
   "repository": {
     "type": "git",
