@@ -41,9 +41,11 @@ class Gateblu extends EventEmitter
       return @refreshConfig() if data.uuid == @config.uuid
 
   getMeshbluDevice: (device, callback) =>
-    @meshbluConnection.device uuid: device.uuid, token: device.token, (result) =>
+    debug 'meshblu.device', device
+    @meshbluConnection.devices uuid: device.uuid, token: device.token, (result) =>
       return callback new Error(result.error?.message) if result.error?
-      callback null, _.extend result.device, device
+      debug 'got device', result
+      callback null, _.extend _.first(result.devices), device
 
   refreshConfig: =>
     @meshbluConnection.whoami {}, (data) =>
@@ -54,6 +56,7 @@ class Gateblu extends EventEmitter
     devices ?= []
     debug 'refreshDevices', devices
     async.mapSeries devices, @getMeshbluDevice, (error, devices) =>
+      console.error error if error?
       @devices = _.compact devices
       @addDevices()
       @removeDevices()
@@ -81,7 +84,7 @@ class Gateblu extends EventEmitter
 
   startDevices: =>
     devicesToStart = _.reject @devices, (device) =>
-      _.findWhere @oldDevices, uuid: device.uuid, start: true
+      _.findWhere @oldDevices, uuid: device.uuid, stop: true
 
     debug 'devicesToStart', devicesToStart
 

@@ -101,7 +101,7 @@ describe 'Gateblu', ->
       expect(@fakeConnection.whoami).to.have.been.calledWith {}
 
     it 'should emit the data returned', ->
-      expect(@sut.emit).to.have.been.calledWith 'gateblu:config', some: 'thing', devices: []
+      expect(@sut.emit).to.have.been.calledWith 'gateblu:config', uuid: 'guid'
 
     it 'should call refreshDevices', ->
       expect(@sut.refreshDevices).to.have.been.calledWith []
@@ -240,7 +240,7 @@ describe 'Gateblu', ->
     describe 'when there are no changes', ->
       beforeEach ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-        @sut.oldDevices = [{uuid: 'fork', stop: false}]
+        @sut.oldDevices = [{uuid: 'fork', stop: true}]
         @sut.devices = _.cloneDeep @sut.oldDevices
         @deviceManager.startDevice = sinon.spy()
         @sut.startDevices()
@@ -257,7 +257,7 @@ describe 'Gateblu', ->
         @sut.startDevices()
 
       it 'should call deviceManager.startDevice', ->
-        expect(@deviceManager.startDevice).to.have.been.calledWith uuid: 'chork', stop: true
+        expect(@deviceManager.startDevice).to.have.been.calledWith uuid: 'chork', stop: false
 
     describe 'when there are two starting devices', ->
       beforeEach ->
@@ -310,7 +310,7 @@ describe 'Gateblu', ->
     describe 'when the device does not exist', ->
       beforeEach ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-        @fakeConnection.device = sinon.stub().yields error: true
+        @fakeConnection.devices = sinon.stub().yields error: {}
         @sut.getMeshbluDevice uuid: '123', token: '456', (@error) =>
 
       it 'should have an error', ->
@@ -319,7 +319,7 @@ describe 'Gateblu', ->
     describe 'when the device does exist', ->
       beforeEach ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-        @fakeConnection.device = sinon.stub().yields device: {uuid: '123', stuff: []}
+        @fakeConnection.devices = sinon.stub().yields devices: [{uuid: '123', stuff: []}]
         @sut.getMeshbluDevice uuid: '123', token: '456', (@error, @result) =>
 
       it 'should not have an error', ->
