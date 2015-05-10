@@ -51,6 +51,7 @@ class Gateblu extends EventEmitter
       @refreshDevices data.devices
 
   refreshDevices: (devices) =>
+    devices ?= []
     debug 'refreshDevices', devices
     async.mapSeries devices, @getMeshbluDevice, (error, devices) =>
       @devices = _.compact devices
