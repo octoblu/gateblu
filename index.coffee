@@ -9,15 +9,16 @@ class Gateblu extends EventEmitter
     @meshblu = dependencies.meshblu || require 'meshblu'
     @createConnection()
 
-  addDevices: =>
+  addDevices: (callback=->) =>
     devicesToAdd = _.reject @devices, (device) =>
       _.findWhere @oldDevices, uuid: device.uuid
 
     debug 'devicesToAdd', devicesToAdd
 
-    _.each devicesToAdd, (device) =>
-      @deviceManager.addDevice device
+    async.eachSeries devicesToAdd, (device, callback) =>
       @subscribe device
+      @deviceManager.addDevice device, callback
+    , callback
 
   createConnection: =>
     debug 'createConnection', @config
@@ -42,10 +43,13 @@ class Gateblu extends EventEmitter
 
   getMeshbluDevice: (device, callback) =>
     debug 'meshblu.device', device
-    @meshbluConnection.devices uuid: device.uuid, token: device.token, (result) =>
-      return callback new Error(result.error?.message) if result.error?
-      debug 'got device', result
-      callback null, _.extend _.first(result.devices), device
+    _.delay =>
+      @meshbluConnection.devices uuid: device.uuid, token: device.token, (result) =>
+        return callback null if result.error?.code == 404
+        return callback new Error(result.error?.message) if result.error?
+        debug 'got device', result
+        callback null, _.extend _.first(result.devices), device
+    , 500
 
   refreshConfig: =>
     @meshbluConnection.whoami {}, (data) =>
@@ -58,11 +62,13 @@ class Gateblu extends EventEmitter
     async.mapSeries devices, @getMeshbluDevice, (error, devices) =>
       console.error error if error?
       @devices = _.compact devices
-      @addDevices()
-      @removeDevices()
-      @stopDevices()
-      @startDevices()
-      @oldDevices = _.cloneDeep @devices
+      async.series [
+        (callback) => @addDevices -> callback()
+        (callback) => @startDevices -> callback()
+        (callback) => @removeDevices -> callback()
+        (callback) => @stopDevices -> callback()
+      ], =>
+        @oldDevices = _.cloneDeep @devices
 
   register: =>
     debug 'registering'
@@ -72,33 +78,35 @@ class Gateblu extends EventEmitter
         uuid: data.uuid
         token: data.token
 
-  removeDevices: =>
+  removeDevices: (callback=->) =>
     devicesToRemove = _.reject @oldDevices, (device) =>
       _.findWhere @devices, uuid: device.uuid
 
     debug 'devicesToRemove', devicesToRemove
 
-    _.each devicesToRemove, (device) =>
-      @deviceManager.removeDevice device
+    async.eachSeries devicesToRemove, (device, callback) =>
       @unsubscribe device
+      @deviceManager.removeDevice device, callback
+    , callback
 
-  startDevices: =>
-    devicesToStart = _.reject @devices, (device) =>
-      _.findWhere @oldDevices, uuid: device.uuid, stop: true
+  startDevices: (callback=->) =>
+    devicesToStart = _.filter @devices, (device) ->
+      device.stop == false || !device.stop?
 
     debug 'devicesToStart', devicesToStart
 
-    _.each devicesToStart, (device) =>
-      @deviceManager.startDevice device
+    async.eachSeries devicesToStart, (device, callback) =>
+      @deviceManager.startDevice device, callback
+    , callback
 
-  stopDevices: =>
-    devicesToStop = _.reject @devices, (device) =>
-      _.findWhere @oldDevices, uuid: device.uuid, stop: true
+  stopDevices: (callback=->) =>
+    devicesToStop = _.where @devices, stop: true
 
     debug 'devicesToStop', devicesToStop
 
-    _.each devicesToStop, (device) =>
-      @deviceManager.stopDevice device
+    async.eachSeries devicesToStop, (device, callback) =>
+      @deviceManager.stopDevice device, callback
+    , callback
 
   subscribe: (device) =>
     @meshbluConnection.subscribe uuid: device.uuid, token: device.token

@@ -112,10 +112,10 @@ describe 'Gateblu', ->
         @devices = [uuid: 'device']
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
         @sut.getMeshbluDevice = sinon.stub().yields null, uuid: 'device'
-        @sut.addDevices = sinon.spy()
-        @sut.removeDevices = sinon.spy()
-        @sut.stopDevices = sinon.spy()
-        @sut.startDevices = sinon.spy()
+        @sut.addDevices = sinon.stub().yields null
+        @sut.removeDevices = sinon.stub().yields null
+        @sut.stopDevices = sinon.stub().yields null
+        @sut.startDevices = sinon.stub().yields null
         @sut.refreshDevices @devices
 
       it 'should call getMeshbluDevice', ->
@@ -141,13 +141,14 @@ describe 'Gateblu', ->
 
   describe 'addDevices', ->
     describe 'when there are no changes', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
         @sut.oldDevices = [{uuid: 'fork'}]
         @sut.devices = _.cloneDeep @sut.oldDevices
-        @deviceManager.addDevice = sinon.spy()
+        @deviceManager.addDevice = sinon.stub().yields null
         @sut.subscribe = sinon.spy()
-        @sut.addDevices()
+        @sut.addDevices done
+#a30
 
       it 'should not call deviceManager.addDevice', ->
         expect(@deviceManager.addDevice).not.to.have.been.called
@@ -156,13 +157,13 @@ describe 'Gateblu', ->
         expect(@sut.subscribe).not.to.have.been.called
 
     describe 'when there is fewer device', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
         @sut.oldDevices = [{uuid: 'fork'}]
         @sut.devices = [{uuid: 'fork'}, {uuid: 'chork'}]
-        @deviceManager.addDevice = sinon.spy()
+        @deviceManager.addDevice = sinon.stub().yields null
         @sut.subscribe = sinon.spy()
-        @sut.addDevices()
+        @sut.addDevices done
 
       it 'should call deviceManager.addDevice', ->
         expect(@deviceManager.addDevice).to.have.been.calledWith uuid: 'chork'
@@ -171,13 +172,13 @@ describe 'Gateblu', ->
         expect(@sut.subscribe).to.have.been.calledWith uuid: 'chork'
 
     describe 'when there are two fewer devices', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
         @sut.oldDevices = [{uuid: 'fork'}]
         @sut.devices = [{uuid: 'fork'}, {uuid: 'chork'}, {uuid: 'mork'}]
-        @deviceManager.addDevice = sinon.spy()
+        @deviceManager.addDevice = sinon.stub().yields null
         @sut.subscribe = sinon.spy()
-        @sut.addDevices()
+        @sut.addDevices done
 
       it 'should call deviceManager.addDevice', ->
         expect(@deviceManager.addDevice).to.have.been.calledWith uuid: 'chork'
@@ -189,13 +190,13 @@ describe 'Gateblu', ->
 
   describe 'removeDevices', ->
     describe 'when there are no changes', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
         @sut.oldDevices = [{uuid: 'fork'}]
         @sut.devices = _.cloneDeep @sut.oldDevices
-        @deviceManager.removeDevice = sinon.spy()
+        @deviceManager.removeDevice = sinon.stub().yields null
         @sut.unsubscribe = sinon.spy()
-        @sut.removeDevices()
+        @sut.removeDevices done
 
       it 'should not call deviceManager.removeDevice', ->
         expect(@deviceManager.removeDevice).not.to.have.been.called
@@ -204,13 +205,13 @@ describe 'Gateblu', ->
         expect(@sut.unsubscribe).not.to.have.been.called
 
     describe 'when there is fewer device', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
         @sut.oldDevices = [{uuid: 'fork'}, {uuid: 'chork'}]
         @sut.devices = [{uuid: 'fork'}]
-        @deviceManager.removeDevice = sinon.spy()
+        @deviceManager.removeDevice = sinon.stub().yields null
         @sut.unsubscribe = sinon.spy()
-        @sut.removeDevices()
+        @sut.removeDevices done
 
       it 'should call deviceManager.removeDevice', ->
         expect(@deviceManager.removeDevice).to.have.been.calledWith uuid: 'chork'
@@ -219,13 +220,13 @@ describe 'Gateblu', ->
         expect(@sut.unsubscribe).to.have.been.calledWith uuid: 'chork'
 
     describe 'when there are two fewer devices', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
         @sut.oldDevices = [{uuid: 'fork'}, {uuid: 'chork'}, {uuid: 'mork'}]
         @sut.devices = [{uuid: 'fork'}]
-        @deviceManager.removeDevice = sinon.spy()
+        @deviceManager.removeDevice = sinon.stub().yields null
         @sut.unsubscribe = sinon.spy()
-        @sut.removeDevices()
+        @sut.removeDevices done
 
       it 'should call deviceManager.removeDevice', ->
         expect(@deviceManager.removeDevice).to.have.been.calledWith uuid: 'chork'
@@ -235,37 +236,34 @@ describe 'Gateblu', ->
         expect(@sut.unsubscribe).to.have.been.calledWith uuid: 'chork'
         expect(@sut.unsubscribe).to.have.been.calledWith uuid: 'mork'
 
-
   describe 'startDevices', ->
     describe 'when there are no changes', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-        @sut.oldDevices = [{uuid: 'fork', stop: true}]
-        @sut.devices = _.cloneDeep @sut.oldDevices
+        @sut.devices = [{uuid: 'fork', stop: true}]
         @deviceManager.startDevice = sinon.spy()
-        @sut.startDevices()
+        @sut.startDevices done
 
       it 'should not call deviceManager.startDevice', ->
         expect(@deviceManager.startDevice).not.to.have.been.called
 
     describe 'when there is a starting device', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-        @sut.oldDevices = [{uuid: 'fork'}, {uuid: 'chork'}]
         @sut.devices = [{uuid: 'chork', stop: false}]
-        @deviceManager.startDevice = sinon.spy()
-        @sut.startDevices()
+        @deviceManager.startDevice = sinon.stub().yields null
+        @sut.startDevices done
 
       it 'should call deviceManager.startDevice', ->
         expect(@deviceManager.startDevice).to.have.been.calledWith uuid: 'chork', stop: false
 
     describe 'when there are two starting devices', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
         @sut.oldDevices = [{uuid: 'fork'}, {uuid: 'chork'}, {uuid: 'mork'}]
         @sut.devices = [{uuid: 'fork'}, {uuid: 'chork', stop: false}, {uuid: 'mork', stop: false}]
-        @deviceManager.startDevice = sinon.spy()
-        @sut.startDevices()
+        @deviceManager.startDevice = sinon.stub().yields null
+        @sut.startDevices done
 
       it 'should call deviceManager.startDevice', ->
         expect(@deviceManager.startDevice).to.have.been.calledWith uuid: 'chork', stop: false
@@ -273,34 +271,32 @@ describe 'Gateblu', ->
 
   describe 'stopDevices', ->
     describe 'when there are no changes', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-        @sut.oldDevices = [{uuid: 'fork', stop: true}]
-        @sut.devices = _.cloneDeep @sut.oldDevices
+        @sut.devices = [{uuid: 'fork', stop: false}]
         @deviceManager.stopDevice = sinon.spy()
-        @sut.stopDevices()
+        @sut.stopDevices done
 
       it 'should not call deviceManager.stopDevice', ->
         expect(@deviceManager.stopDevice).not.to.have.been.called
 
     describe 'when there is a stopped device', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-        @sut.oldDevices = [{uuid: 'fork'}, {uuid: 'chork'}]
         @sut.devices = [{uuid: 'chork', stop: true}]
-        @deviceManager.stopDevice = sinon.spy()
-        @sut.stopDevices()
+        @deviceManager.stopDevice = sinon.stub().yields null
+        @sut.stopDevices done
 
       it 'should call deviceManager.stopDevice', ->
         expect(@deviceManager.stopDevice).to.have.been.calledWith uuid: 'chork', stop: true
 
     describe 'when there are two stopped devices', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
         @sut.oldDevices = [{uuid: 'fork'}, {uuid: 'chork'}, {uuid: 'mork'}]
         @sut.devices = [{uuid: 'fork'}, {uuid: 'chork', stop: true}, {uuid: 'mork', stop: true}]
-        @deviceManager.stopDevice = sinon.spy()
-        @sut.stopDevices()
+        @deviceManager.stopDevice = sinon.stub().yields null
+        @sut.stopDevices done
 
       it 'should call deviceManager.stopDevice', ->
         expect(@deviceManager.stopDevice).to.have.been.calledWith uuid: 'chork', stop: true
@@ -308,19 +304,19 @@ describe 'Gateblu', ->
 
   describe 'getMeshbluDevice', ->
     describe 'when the device does not exist', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
         @fakeConnection.devices = sinon.stub().yields error: {}
-        @sut.getMeshbluDevice uuid: '123', token: '456', (@error) =>
+        @sut.getMeshbluDevice uuid: '123', token: '456', (@error) => done()
 
       it 'should have an error', ->
         expect(@error).to.exist
 
     describe 'when the device does exist', ->
-      beforeEach ->
+      beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
         @fakeConnection.devices = sinon.stub().yields devices: [{uuid: '123', stuff: []}]
-        @sut.getMeshbluDevice uuid: '123', token: '456', (@error, @result) =>
+        @sut.getMeshbluDevice uuid: '123', token: '456', (@error, @result) => done()
 
       it 'should not have an error', ->
         expect(@error).not.to.exist
