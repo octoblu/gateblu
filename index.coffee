@@ -101,7 +101,9 @@ class Gateblu extends EventEmitter
       @deviceManager.stopDevice device
 
   subscribe: (device) =>
+    @meshbluConnection.subscribe uuid: device.uuid, token: device.token
 
   unsubscribe: (device) =>
+    @meshbluConnection.unsubscribe uuid: device.uuid, token: device.token
 
 module.exports = Gateblu

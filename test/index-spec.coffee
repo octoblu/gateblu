@@ -327,3 +327,21 @@ describe 'Gateblu', ->
 
       it 'should return a result merged with the original device (to preserve token)', ->
         expect(@result).to.deep.equal uuid: '123', token: '456', stuff: []
+
+  describe 'subscribe', ->
+    beforeEach ->
+      @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
+      @fakeConnection.subscribe = sinon.spy()
+      @sut.subscribe uuid: 'devid', token: 'tokin'
+
+    it 'should call subscribe on meshblu', ->
+      expect(@fakeConnection.subscribe).to.have.been.calledWith uuid: 'devid', token: 'tokin'
+
+  describe 'unsubscribe', ->
+    beforeEach ->
+      @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
+      @fakeConnection.unsubscribe = sinon.spy()
+      @sut.unsubscribe uuid: 'devid', token: 'tokin'
+
+    it 'should call unsubscribe on meshblu', ->
+      expect(@fakeConnection.unsubscribe).to.have.been.calledWith uuid: 'devid', token: 'tokin'
