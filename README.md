@@ -4,7 +4,7 @@
 [![Code Climate](https://codeclimate.com/github/octoblu/gateblu/badges/gpa.svg)](https://codeclimate.com/github/octoblu/gateblu)
 [![Test Coverage](https://codeclimate.com/github/octoblu/gateblu/badges/coverage.svg)](https://codeclimate.com/github/octoblu/gateblu)
 
-This is the library for [Gateblu Forever](https://github.com/octoblu/gateblu-forever)
+This is the library for [Gateblu Forever](https://github.com/octoblu/gateblu-forever)  
 [Gateblu Forever](https://github.com/octoblu/gateblu-forever) will automatically register itself with meshblu.octoblu.com on startup.
 
 Sample `meshblu.json`
