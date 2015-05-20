@@ -43,6 +43,7 @@ class Gateblu extends EventEmitter
 
   getMeshbluDevice: (device, callback) =>
     debug 'meshblu.device', device
+    return callback new Error('Invalid Device') unless device.uuid?
     _.delay =>
       @meshbluConnection.devices uuid: device.uuid, token: device.token, (result) =>
         return callback null if result.error?.code == 404
