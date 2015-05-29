@@ -37,6 +37,7 @@ class Gateblu extends EventEmitter
       @config.uuid = data.uuid
       @config.token = data.token
       @refreshConfig()
+      @emit 'ready', data
 
     @meshbluConnection.on 'config', (data) =>
       return @refreshConfig() if data.uuid == @config.uuid
