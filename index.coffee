@@ -1,12 +1,13 @@
 'use strict';
 _            = require 'lodash'
-async        = require 'async'
 debug        = require('debug')('gateblu:index')
 {EventEmitter} = require 'events'
 
 class Gateblu extends EventEmitter
   constructor: (@config, @deviceManager, dependencies={}) ->
     @meshblu = dependencies.meshblu || require 'meshblu'
+    @async = dependencies.async || require 'async'
+    @queue = @async.queue(@refreshConfigWorker)
     @createConnection()
 
   addDevices: (callback=->) =>
@@ -15,10 +16,13 @@ class Gateblu extends EventEmitter
 
     debug 'devicesToAdd', devicesToAdd
 
-    async.eachSeries devicesToAdd, (device, callback) =>
+    @async.eachSeries devicesToAdd, (device, callback) =>
       @subscribe device
       @deviceManager.addDevice device, callback
     , callback
+
+  addToRefreshQueue: (callback=->) =>
+    @queue?.push {}
 
   createConnection: =>
     debug 'createConnection', @config
@@ -36,11 +40,11 @@ class Gateblu extends EventEmitter
       debug 'ready', data
       @config.uuid = data.uuid
       @config.token = data.token
-      @refreshConfig()
+      @addToRefreshQueue()
       @emit 'ready', data
 
     @meshbluConnection.on 'config', (data) =>
-      return @refreshConfig() if data.uuid == @config.uuid
+      return @addToRefreshQueue() if data.uuid == @config.uuid
 
   getMeshbluDevice: (device, callback) =>
     debug 'meshblu.device', device
@@ -53,24 +57,29 @@ class Gateblu extends EventEmitter
         callback null, _.extend _.first(result.devices), device
     , 500
 
-  refreshConfig: =>
+  refreshConfig: (callback=->) =>
     @meshbluConnection.whoami {}, (data) =>
       @emit 'gateblu:config', @config
-      @refreshDevices data.devices
+      @refreshDevices data.devices, =>
+        callback()
 
-  refreshDevices: (devices) =>
+  refreshConfigWorker: (task, callback=->) =>
+    @refreshConfig callback
+
+  refreshDevices: (devices, callback=->) =>
     devices ?= []
     debug 'refreshDevices', devices
-    async.mapSeries devices, @getMeshbluDevice, (error, devices) =>
+    @async.mapSeries devices, @getMeshbluDevice, (error, devices) =>
       console.error error if error?
       @devices = _.compact devices
-      async.series [
+      @async.series [
         (callback) => @addDevices -> callback()
         (callback) => @startDevices -> callback()
         (callback) => @removeDevices -> callback()
         (callback) => @stopDevices -> callback()
       ], =>
         @oldDevices = _.cloneDeep @devices
+        callback()
 
   register: =>
     debug 'registering'
@@ -86,7 +95,7 @@ class Gateblu extends EventEmitter
 
     debug 'devicesToRemove', devicesToRemove
 
-    async.eachSeries devicesToRemove, (device, callback) =>
+    @async.eachSeries devicesToRemove, (device, callback) =>
       @unsubscribe device
       @deviceManager.removeDevice device, callback
     , callback
@@ -97,7 +106,7 @@ class Gateblu extends EventEmitter
 
     debug 'devicesToStart', devicesToStart
 
-    async.eachSeries devicesToStart, (device, callback) =>
+    @async.eachSeries devicesToStart, (device, callback) =>
       @deviceManager.startDevice device, callback
     , callback
 
@@ -106,7 +115,7 @@ class Gateblu extends EventEmitter
 
     debug 'devicesToStop', devicesToStop
 
-    async.eachSeries devicesToStop, (device, callback) =>
+    @async.eachSeries devicesToStop, (device, callback) =>
       @deviceManager.stopDevice device, callback
     , callback
 

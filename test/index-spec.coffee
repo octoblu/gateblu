@@ -19,6 +19,14 @@ describe 'Gateblu', ->
     it 'should have an on method', ->
       expect(@sut.on).to.exist
 
+  describe 'should create a queue', ->
+    beforeEach ->
+      @fakeAsync = queue: sinon.spy()
+      @sut = new Gateblu {}, @deviceManager, async: @fakeAsync
+
+    it 'should create a queue', ->
+      expect(@fakeAsync.queue).to.have.been.calledWith @sut.refreshConfigWorker
+
   describe 'on: notReady', ->
     describe 'when unregistered and no uuid', ->
       beforeEach ->
@@ -43,7 +51,7 @@ describe 'Gateblu', ->
       beforeEach ->
         @config = {}
         @sut = new Gateblu @config, @deviceManager, meshblu: @fakeMeshblu
-        @sut.refreshConfig = sinon.spy()
+        @sut.addToRefreshQueue = sinon.spy()
         @fakeConnection.emit 'ready', uuid: 'spork', token: 'york'
 
       it 'should set config.uuid', ->
@@ -52,29 +60,29 @@ describe 'Gateblu', ->
       it 'should set config.token', ->
         expect(@config.token).to.equal 'york'
 
-      it 'should call refreshConfig on meshblu', ->
-        expect(@sut.refreshConfig).to.have.been.called
+      it 'should call addToRefreshQueue on meshblu', ->
+        expect(@sut.addToRefreshQueue).to.have.been.called
 
   describe 'on: config', ->
     describe 'gateway config', ->
       beforeEach ->
         @config = uuid: 'bjork'
         @sut = new Gateblu @config, @deviceManager, meshblu: @fakeMeshblu
-        @sut.refreshConfig = sinon.spy()
+        @sut.addToRefreshQueue = sinon.spy()
         @fakeConnection.emit 'config', uuid: 'bjork', token: 'york'
 
-      it 'should call refreshConfig', ->
-        expect(@sut.refreshConfig).to.have.been.called
+      it 'should call addToRefreshQueue', ->
+        expect(@sut.addToRefreshQueue).to.have.been.called
 
     describe 'device config', ->
       beforeEach ->
         @config = uuid: 'stork'
         @sut = new Gateblu @config, @deviceManager, meshblu: @fakeMeshblu
-        @sut.refreshConfig = sinon.spy()
+        @sut.addToRefreshQueue = sinon.spy()
         @fakeConnection.emit 'config', uuid: 'dork', token: 'york'
 
-      it 'should not call refreshConfig', ->
-        expect(@sut.refreshConfig).not.to.have.been.called
+      it 'should not call addToRefreshQueue', ->
+        expect(@sut.addToRefreshQueue).not.to.have.been.called
 
   describe 'register', ->
     beforeEach ->
@@ -89,13 +97,34 @@ describe 'Gateblu', ->
     it 'should call fakeConnection.identify', ->
       expect(@fakeConnection.identify).to.have.been.called
 
+  describe 'addToRefreshQueue', ->
+    beforeEach ->
+      @fakeQueue = push: sinon.spy()
+      @fakeAsync = queue: sinon.stub().returns @fakeQueue
+      @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu, async: @fakeAsync
+      @sut.addToRefreshQueue()
+
+    it 'should call push', ->
+      expect(@fakeQueue.push).to.have.been.calledWith {}
+
+  describe 'refreshConfigWorker', ->
+    beforeEach ->
+      @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
+      @sut.refreshConfig = sinon.spy()
+      @callback = ->
+      @sut.refreshConfigWorker null, @callback
+
+    it 'should call refreshConfig', ->
+      expect(@sut.refreshConfig).to.have.been.calledWith @callback
+
   describe 'refreshConfig', ->
     beforeEach ->
       @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
       @fakeConnection.whoami = sinon.stub().yields some: 'thing', devices: []
       @sut.emit = sinon.spy()
-      @sut.refreshDevices = sinon.spy()
-      @sut.refreshConfig()
+      @sut.refreshDevices = sinon.stub().yields null
+      @callback = sinon.spy()
+      @sut.refreshConfig @callback
 
     it 'should call meshblu.whoami', ->
       expect(@fakeConnection.whoami).to.have.been.calledWith {}
@@ -105,6 +134,9 @@ describe 'Gateblu', ->
 
     it 'should call refreshDevices', ->
       expect(@sut.refreshDevices).to.have.been.calledWith []
+
+    it 'should call the callback', ->
+      expect(@callback).to.have.been.called
 
   describe 'refreshDevices', ->
     describe 'when called for the first time', ->
@@ -116,7 +148,8 @@ describe 'Gateblu', ->
         @sut.removeDevices = sinon.stub().yields null
         @sut.stopDevices = sinon.stub().yields null
         @sut.startDevices = sinon.stub().yields null
-        @sut.refreshDevices @devices
+        @callback = sinon.spy()
+        @sut.refreshDevices @devices, @callback
 
       it 'should call getMeshbluDevice', ->
         expect(@sut.getMeshbluDevice).to.have.been.calledWith uuid: 'device'
@@ -138,6 +171,9 @@ describe 'Gateblu', ->
 
       it 'should call removeDevices', ->
         expect(@sut.removeDevices).to.have.been.called
+
+      it 'should call the callback', ->
+        expect(@callback).to.have.been.called
 
   describe 'addDevices', ->
     describe 'when there are no changes', ->
