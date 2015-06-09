@@ -120,9 +120,9 @@ class Gateblu extends EventEmitter
     , callback
 
   subscribe: (device) =>
-    @meshbluConnection.subscribe uuid: device.uuid, token: device.token
+    @meshbluConnection.subscribe uuid: device.uuid, token: device.token, types: ['received', 'broadcast']
 
   unsubscribe: (device) =>
-    @meshbluConnection.unsubscribe uuid: device.uuid, token: device.token
+    @meshbluConnection.unsubscribe uuid: device.uuid, token: device.token, types: ['received', 'broadcast']
 
 module.exports = Gateblu

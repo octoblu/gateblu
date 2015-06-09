@@ -367,7 +367,7 @@ describe 'Gateblu', ->
       @sut.subscribe uuid: 'devid', token: 'tokin'
 
     it 'should call subscribe on meshblu', ->
-      expect(@fakeConnection.subscribe).to.have.been.calledWith uuid: 'devid', token: 'tokin'
+      expect(@fakeConnection.subscribe).to.have.been.calledWith uuid: 'devid', token: 'tokin', types: ['received', 'broadcast']
 
   describe 'unsubscribe', ->
     beforeEach ->
@@ -376,4 +376,4 @@ describe 'Gateblu', ->
       @sut.unsubscribe uuid: 'devid', token: 'tokin'
 
     it 'should call unsubscribe on meshblu', ->
-      expect(@fakeConnection.unsubscribe).to.have.been.calledWith uuid: 'devid', token: 'tokin'
+      expect(@fakeConnection.unsubscribe).to.have.been.calledWith uuid: 'devid', token: 'tokin', types: ['received', 'broadcast']
