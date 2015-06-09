@@ -97,12 +97,12 @@ describe 'Gateblu', ->
     it 'should call fakeConnection.identify', ->
       expect(@fakeConnection.identify).to.have.been.called
 
-  describe 'addToRefreshQueue', ->
+  describe 'addToRefreshQueueImmediately', ->
     beforeEach ->
       @fakeQueue = push: sinon.spy()
       @fakeAsync = queue: sinon.stub().returns @fakeQueue
       @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu, async: @fakeAsync
-      @sut.addToRefreshQueue()
+      @sut.addToRefreshQueueImmediately()
 
     it 'should call push', ->
       expect(@fakeQueue.push).to.have.been.calledWith {}
