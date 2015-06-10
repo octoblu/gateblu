@@ -84,6 +84,17 @@ describe 'Gateblu', ->
       it 'should not call addToRefreshQueue', ->
         expect(@sut.addToRefreshQueue).not.to.have.been.called
 
+  describe 'on: unregistered', ->
+    describe 'device unregistered', ->
+      beforeEach ->
+        @config = uuid: 'stork'
+        @sut = new Gateblu @config, @deviceManager, meshblu: @fakeMeshblu
+        @sut.addToRefreshQueue = sinon.spy()
+        @fakeConnection.emit 'unregistered', uuid: 'fork', token: 'spork'
+
+      it 'should call addToRefreshQueue', ->
+        expect(@sut.addToRefreshQueue).to.have.been.called
+
   describe 'register', ->
     beforeEach ->
       @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
@@ -143,8 +154,9 @@ describe 'Gateblu', ->
       beforeEach (done) ->
         @devices = [uuid: 'device']
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
+        @sut.oldDevices = []
         @sut.getMeshbluDevice = sinon.stub().yields null, uuid: 'device'
-        @sut.updateGatebluDevice = sinon.stub().yields null
+        @sut.updateGateblu = sinon.stub().yields null
         @sut.addDevices = sinon.stub().yields null
         @sut.removeDevices = sinon.stub().yields null
         @sut.stopDevices = sinon.stub().yields null
@@ -161,6 +173,9 @@ describe 'Gateblu', ->
       it 'should set @oldDevices', ->
         expect(@sut.oldDevices).to.deep.equal @devices
 
+      it 'should call updateGateblu', ->
+        expect(@sut.updateGateblu).to.have.been.called
+
       it 'should call addDevices', ->
         expect(@sut.addDevices).to.have.been.called
 
@@ -176,6 +191,47 @@ describe 'Gateblu', ->
       it 'should call the callback', ->
         expect(@callback).to.have.been.called
 
+    describe 'when devices is the same as @oldDevices', ->
+      beforeEach (done) ->
+        @devices = [uuid: 'device']
+        @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
+        @sut.oldDevices = [uuid: 'device']
+        @sut.getMeshbluDevice = sinon.stub().yields null, uuid: 'device'
+        @sut.updateGateblu = sinon.stub().yields null
+        @sut.addDevices = sinon.stub().yields null
+        @sut.removeDevices = sinon.stub().yields null
+        @sut.stopDevices = sinon.stub().yields null
+        @sut.startDevices = sinon.stub().yields null
+        @callback = sinon.spy => done()
+        @sut.refreshDevices @devices, @callback
+
+      it 'should call getMeshbluDevice', ->
+        expect(@sut.getMeshbluDevice).to.have.been.calledWith uuid: 'device'
+
+      it 'should not set @devices', ->
+        expect(@sut.devices).not.to.deep.equal @devices
+
+      it 'should not set @oldDevices', ->
+        expect(@sut.oldDevices).to.deep.equal @devices
+
+      it 'should not call updateGateblu', ->
+        expect(@sut.updateGateblu).not.to.have.been.called
+
+      it 'should not call addDevices', ->
+        expect(@sut.addDevices).not.to.have.been.called
+
+      it 'should not call stopDevices', ->
+        expect(@sut.stopDevices).not.to.have.been.called
+
+      it 'should not call startDevices', ->
+        expect(@sut.startDevices).not.to.have.been.called
+
+      it 'should not call removeDevices', ->
+        expect(@sut.removeDevices).not.to.have.been.called
+
+      it 'should call the callback', ->
+        expect(@callback).to.have.been.called
+
   describe 'addDevices', ->
     describe 'when there are no changes', ->
       beforeEach (done) ->
@@ -185,7 +241,6 @@ describe 'Gateblu', ->
         @deviceManager.addDevice = sinon.stub().yields null
         @sut.subscribe = sinon.spy()
         @sut.addDevices done
-#a30
 
       it 'should not call deviceManager.addDevice', ->
         expect(@deviceManager.addDevice).not.to.have.been.called
@@ -378,3 +433,19 @@ describe 'Gateblu', ->
 
     it 'should call unsubscribe on meshblu', ->
       expect(@fakeConnection.unsubscribe).to.have.been.calledWith uuid: 'devid', token: 'tokin', types: ['received', 'broadcast']
+
+  describe 'updateGateblu', ->
+    describe 'when devices has changed', ->
+    beforeEach (done) ->
+      @fakeConnection.whoami = sinon.stub().yields devices: [too: 'bad'], uuid: '12345'
+      @fakeConnection.update = sinon.stub().yields null
+      @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
+      @sut.devices = [foo: 'bar']
+      @sut.oldDevices = [baz: 'for']
+      @sut.updateGateblu => done()
+
+    it 'should call whoami on meshblu', ->
+      expect(@fakeConnection.whoami).to.have.been.calledWith {}
+
+    it 'should call update on meshblu', ->
+      expect(@fakeConnection.update).to.have.been.calledWith uuid: '12345', devices: [foo: 'bar']
