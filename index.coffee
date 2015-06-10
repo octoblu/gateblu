@@ -81,6 +81,7 @@ class Gateblu extends EventEmitter
         (callback) => @stopDevices -> callback()
       ], =>
         @oldDevices = _.cloneDeep @devices
+        debug 'refreshDevices', 'in callback', @devices, @oldDevices
         callback()
 
   register: =>

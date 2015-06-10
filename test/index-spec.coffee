@@ -140,15 +140,16 @@ describe 'Gateblu', ->
 
   describe 'refreshDevices', ->
     describe 'when called for the first time', ->
-      beforeEach ->
+      beforeEach (done) ->
         @devices = [uuid: 'device']
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
         @sut.getMeshbluDevice = sinon.stub().yields null, uuid: 'device'
+        @sut.updateGatebluDevice = sinon.stub().yields null
         @sut.addDevices = sinon.stub().yields null
         @sut.removeDevices = sinon.stub().yields null
         @sut.stopDevices = sinon.stub().yields null
         @sut.startDevices = sinon.stub().yields null
-        @callback = sinon.spy()
+        @callback = sinon.spy => done()
         @sut.refreshDevices @devices, @callback
 
       it 'should call getMeshbluDevice', ->
