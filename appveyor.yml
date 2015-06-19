@@ -1,0 +1,35 @@
+environment:
+  nodejs_version: 0.10.38
+  PRECOMPILE_S3_ACCESS_KEY_ID:
+    secure: tBp8yqe6+JQoPLP1Z7koojdSdwrwIMc4eQF1+3UTpEQ=
+  PRECOMPILE_S3_SECRET_ACCESS_KEY:
+    secure: cFwATEkycF0yVPBsMBevUntX0ylOMsjvSbnaePjbONDOpxV/7QvU7aOt/zoPwHmI
+
+platform:
+  - x64
+  - x86
+
+shallow_clone: true
+
+install:
+  - ps: Install-Product node $env:nodejs_version $env:Platform
+  - node --version
+  - npm --version
+  - SET PATH=%APPDATA%\npm;%PATH%
+  - npm update -g npm
+  - npm --version
+  - node -e "console.log(process.arch);"
+  - FOR /F "delims=" %%a IN ('node -e "console.log(require('./package.json').version)"') DO SET PACKAGE_VERSION=%%~a
+  - SET PATH=C:\Program Files (x86)\MSBuild\12.0\bin\;%PATH%
+  - SET GYP_MSVS_VERSION=2013
+  - if "%PLATFORM%" == "x64" set PATH=C:\Python27-x64;%PATH%
+  - if "%PLATFORM%" == "x64" set NODE_PLATFORM="x64"
+  - if "%PLATFORM%" == "x86" SET PATH=C:\python27;%PATH%
+  - if "%PLATFORM%" == "x86" SET NODE_PLATFORM="ia32"
+  - if NOT "%APPVEYOR_REPO_TAG_NAME%" == "" npm install -g node-pre-compile-to-s3
+  - if NOT "%APPVEYOR_REPO_TAG_NAME%" == "" node-pre-compile-to-s3 precompile -p "%APPVEYOR_BUILD_FOLDER%\build" "%APPVEYOR_BUILD_FOLDER%\package.json"
+  - if NOT "%APPVEYOR_REPO_TAG_NAME%" == "" node-pre-compile-to-s3 upload -r "npm/gateblu/%PACKAGE_VERSION%" -b octoblu-cdn "%APPVEYOR_BUILD_FOLDER%\build\gateblu-%PACKAGE_VERSION%-win32-%NODE_PLATFORM%-node-modules.tar.gz"
+
+build: off
+test: off
+deploy: off
