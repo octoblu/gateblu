@@ -42,8 +42,9 @@ class Gateblu extends EventEmitter
       debug 'ready', data
       @config.uuid = data.uuid
       @config.token = data.token
-      @addToRefreshQueue()
-      @emit 'ready', data
+      @ensureType =>
+        @addToRefreshQueue()
+        @emit 'ready', data
 
     @meshbluConnection.on 'config', (data) =>
       @addToRefreshQueue() if data.uuid == @config.uuid
@@ -61,6 +62,14 @@ class Gateblu extends EventEmitter
         debug 'got device', result
         callback null, _.extend _.first(result.devices), device
     , 500
+
+  ensureType: (callback=->) =>
+    debug 'ensureType'
+    @meshbluConnection.whoami {}, (data) =>
+      return callback() if data.type?
+      debug 'no type set, updating'
+      @meshbluConnection.update type: 'device:gateblu', =>
+        callback()
 
   refreshConfig: (callback=->) =>
     @meshbluConnection.whoami {}, (data) =>
