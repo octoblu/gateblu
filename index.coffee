@@ -73,6 +73,10 @@ class Gateblu extends EventEmitter
 
   refreshConfig: (callback=->) =>
     @meshbluConnection.whoami {}, (data) =>
+      hash = data.meshblu?.hash
+      debug 'refreshConfig compare hash', @previousHash, hash, data
+      return callback() if @previousHash? && @previousHash == hash
+      @previousHash = hash if hash?
       @emit 'gateblu:config', @config
       @refreshDevices data.devices, =>
         callback()

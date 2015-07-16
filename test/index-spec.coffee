@@ -179,25 +179,48 @@ describe 'Gateblu', ->
       expect(@sut.refreshConfig).to.have.been.calledWith @callback
 
   describe 'refreshConfig', ->
-    beforeEach ->
-      @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-      @fakeConnection.whoami = sinon.stub().yields some: 'thing', devices: []
-      @sut.emit = sinon.spy()
-      @sut.refreshDevices = sinon.stub().yields null
-      @callback = sinon.spy()
-      @sut.refreshConfig @callback
+    describe 'when the hash does not match', ->
+      beforeEach (done) ->
+        @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
+        @fakeConnection.whoami = sinon.stub().yields some: 'thing', devices: [], meshblu: {hash: '12345'}
+        @sut.emit = sinon.spy()
+        @sut.refreshDevices = sinon.stub().yields null
+        @callback = sinon.spy => done()
+        @sut.refreshConfig @callback
 
-    it 'should call meshblu.whoami', ->
-      expect(@fakeConnection.whoami).to.have.been.calledWith {}
+      it 'should call meshblu.whoami', ->
+        expect(@fakeConnection.whoami).to.have.been.calledWith {}
 
-    it 'should emit the data returned', ->
-      expect(@sut.emit).to.have.been.calledWith 'gateblu:config', uuid: 'guid'
+      it 'should emit the data returned', ->
+        expect(@sut.emit).to.have.been.calledWith 'gateblu:config', uuid: 'guid'
 
-    it 'should call refreshDevices', ->
-      expect(@sut.refreshDevices).to.have.been.calledWith []
+      it 'should call refreshDevices', ->
+        expect(@sut.refreshDevices).to.have.been.calledWith []
 
-    it 'should call the callback', ->
-      expect(@callback).to.have.been.called
+      it 'should call the callback', ->
+        expect(@callback).to.have.been.called
+
+    describe 'when the hash matches', ->
+      beforeEach (done) ->
+        @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
+        @sut.previousHash = '4566'
+        @fakeConnection.whoami = sinon.stub().yields some: 'thing', devices: [], meshblu: {hash: '4566'}
+        @sut.emit = sinon.spy()
+        @sut.refreshDevices = sinon.spy()
+        @callback = sinon.spy => done()
+        @sut.refreshConfig @callback
+
+      it 'should call meshblu.whoami', ->
+        expect(@fakeConnection.whoami).to.have.been.calledWith {}
+
+      it 'should not emit the data returned', ->
+        expect(@sut.emit).not.to.have.been.called
+
+      it 'should call refreshDevices', ->
+        expect(@sut.refreshDevices).not.to.have.been.called
+
+      it 'should call the callback', ->
+        expect(@callback).to.have.been.called
 
   describe 'refreshDevices', ->
     describe 'when called for the first time', ->
