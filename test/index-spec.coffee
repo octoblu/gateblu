@@ -5,6 +5,7 @@ _ = require 'lodash'
 describe 'Gateblu', ->
   beforeEach ->
     @fakeConnection = new EventEmitter
+    @fakeConnection.whoami = sinon.stub()
     class FakeMeshblu
       createConnection: sinon.stub()
 
@@ -185,6 +186,7 @@ describe 'Gateblu', ->
         @fakeConnection.whoami = sinon.stub().yields some: 'thing', devices: [], meshblu: {hash: '12345'}
         @sut.emit = sinon.spy()
         @sut.refreshDevices = sinon.stub().yields null
+        @sut.updateDevicePermissions = sinon.stub().yields null
         @callback = sinon.spy => done()
         @sut.refreshConfig @callback
 
@@ -193,6 +195,9 @@ describe 'Gateblu', ->
 
       it 'should emit the data returned', ->
         expect(@sut.emit).to.have.been.calledWith 'gateblu:config', uuid: 'guid'
+
+      it 'should call updateDevicePermissions', ->
+        expect(@sut.updateDevicePermissions).to.have.been.calledWith []
 
       it 'should call refreshDevices', ->
         expect(@sut.refreshDevices).to.have.been.calledWith []
@@ -206,6 +211,7 @@ describe 'Gateblu', ->
         @sut.previousHash = '4566'
         @fakeConnection.whoami = sinon.stub().yields some: 'thing', devices: [], meshblu: {hash: '4566'}
         @sut.emit = sinon.spy()
+        @sut.updateDevicePermissions = sinon.spy()
         @sut.refreshDevices = sinon.spy()
         @callback = sinon.spy => done()
         @sut.refreshConfig @callback
@@ -216,8 +222,8 @@ describe 'Gateblu', ->
       it 'should not emit the data returned', ->
         expect(@sut.emit).not.to.have.been.called
 
-      it 'should call refreshDevices', ->
-        expect(@sut.refreshDevices).not.to.have.been.called
+      it 'should call updateDevicePermissions', ->
+        expect(@sut.updateDevicePermissions).not.to.have.been.called
 
       it 'should call the callback', ->
         expect(@callback).to.have.been.called
@@ -230,6 +236,7 @@ describe 'Gateblu', ->
         @sut.oldDevices = []
         @sut.getMeshbluDevice = sinon.stub().yields null, uuid: 'device'
         @sut.updateGateblu = sinon.stub().yields null
+        @sut.generateDeviceTokens = sinon.stub().yields null
         @sut.addDevices = sinon.stub().yields null
         @sut.removeDevices = sinon.stub().yields null
         @sut.stopDevices = sinon.stub().yields null
@@ -248,6 +255,9 @@ describe 'Gateblu', ->
 
       it 'should call updateGateblu', ->
         expect(@sut.updateGateblu).to.have.been.called
+
+      it 'should call generateDeviceTokens', ->
+        expect(@sut.generateDeviceTokens).to.have.been.called
 
       it 'should call addDevices', ->
         expect(@sut.addDevices).to.have.been.called
@@ -304,6 +314,18 @@ describe 'Gateblu', ->
 
       it 'should call the callback', ->
         expect(@callback).to.have.been.called
+
+  describe 'generateDeviceTokens', ->
+    describe 'always', ->
+      beforeEach (done) ->
+        @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
+        @sut.oldDevices = [{uuid: 'fork'}]
+        @sut.devices = _.cloneDeep @sut.oldDevices
+        @fakeConnection.generateAndStoreToken = sinon.stub().yields null, token: 'foo'
+        @sut.generateDeviceTokens done
+
+      it 'should call generateAndStoreToken', ->
+        expect(@fakeConnection.generateAndStoreToken).to.have.been.calledWith uuid: 'fork'
 
   describe 'addDevices', ->
     describe 'when there are no changes', ->
@@ -471,7 +493,7 @@ describe 'Gateblu', ->
     describe 'when the device does not exist', ->
       beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-        @fakeConnection.devices = sinon.stub().yields error: {}
+        @fakeConnection.device = sinon.stub().yields error: {}
         @sut.getMeshbluDevice uuid: '123', token: '456', (@error) => done()
 
       it 'should have an error', ->
@@ -480,7 +502,7 @@ describe 'Gateblu', ->
     describe 'when the device does exist', ->
       beforeEach (done) ->
         @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-        @fakeConnection.devices = sinon.stub().yields devices: [{uuid: '123', stuff: []}]
+        @fakeConnection.device = sinon.stub().yields device: {uuid: '123', stuff: []}
         @sut.getMeshbluDevice uuid: '123', token: '456', (@error, @result) => done()
 
       it 'should not have an error', ->
@@ -510,15 +532,11 @@ describe 'Gateblu', ->
   describe 'updateGateblu', ->
     describe 'when devices has changed', ->
     beforeEach (done) ->
-      @fakeConnection.whoami = sinon.stub().yields devices: [too: 'bad'], uuid: '12345'
       @fakeConnection.update = sinon.stub().yields null
       @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-      @sut.devices = [foo: 'bar']
-      @sut.oldDevices = [baz: 'for']
+      @sut.devices = [type: 'bar']
+      @sut.oldDevices = [type: 'for']
       @sut.updateGateblu => done()
 
-    it 'should call whoami on meshblu', ->
-      expect(@fakeConnection.whoami).to.have.been.calledWith {}
-
     it 'should call update on meshblu', ->
-      expect(@fakeConnection.update).to.have.been.calledWith uuid: '12345', devices: [foo: 'bar']
+      expect(@fakeConnection.update).to.have.been.calledWith uuid: 'guid', devices: [type: 'bar'], version: "5.0.0"

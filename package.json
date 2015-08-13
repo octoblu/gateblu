@@ -1,6 +1,6 @@
 {
   "name": "gateblu",
-  "version": "4.5.0",
+  "version": "5.0.0",
   "description": "Gateblu core library",
   "main": "index.js",
   "scripts": {
@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/octoblu/gateblu",
   "dependencies": {
-    "async": "^1.0.0",
+    "async": "^1.4.2",
     "coffee-script": "^1.9.2",
     "debug": "^2.1.0",
     "fstream": "^1.0.7",

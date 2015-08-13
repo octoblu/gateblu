@@ -1,6 +1,7 @@
 'use strict';
 _            = require 'lodash'
 debug        = require('debug')('gateblu:index')
+packageJSON  = require './package.json'
 {EventEmitter} = require 'events'
 
 class Gateblu extends EventEmitter
@@ -16,7 +17,7 @@ class Gateblu extends EventEmitter
     devicesToAdd = _.reject @devices, (device) =>
       _.findWhere @oldDevices, uuid: device.uuid
 
-    debug 'devicesToAdd', devicesToAdd
+    debug 'devicesToAdd', devicesToAdd?.uuid
 
     @async.eachSeries devicesToAdd, (device, callback) =>
       @subscribe device
@@ -52,15 +53,22 @@ class Gateblu extends EventEmitter
     @meshbluConnection.on 'unregistered', (data) =>
       @addToRefreshQueue()
 
-  getMeshbluDevice: (device, callback) =>
+  generateDeviceTokens: (callback=->) =>
+    @async.eachSeries @devices, (device, cb) =>
+      @meshbluConnection.generateAndStoreToken uuid: device.uuid, (result) =>
+        device.token = result?.token
+        cb()
+    , callback
+
+  getMeshbluDevice: (device, callback=->) =>
     debug 'meshblu.device', device
     return callback null unless device.uuid?
     _.delay =>
-      @meshbluConnection.devices uuid: device.uuid, token: device.token, (result) =>
+      @meshbluConnection.device uuid: device.uuid, (result) =>
         return callback null if result.error?.code == 404
         return callback new Error(result.error?.message) if result.error?
-        debug 'got device', result
-        callback null, _.extend _.first(result.devices), device
+        debug 'got device', result?.device?.uuid
+        callback null, _.extend result.device, device
     , 500
 
   ensureType: (callback=->) =>
@@ -74,11 +82,14 @@ class Gateblu extends EventEmitter
   refreshConfig: (callback=->) =>
     @meshbluConnection.whoami {}, (data) =>
       hash = data.meshblu?.hash
-      debug 'refreshConfig compare hash', @previousHash, hash, data
+      debug 'refreshConfig compare hash', @previousHash, hash, @previousHash == hash
       return callback() if @previousHash? && @previousHash == hash
       @previousHash = hash if hash?
       @emit 'gateblu:config', @config
-      @refreshDevices data.devices, =>
+      @async.series [
+        @async.apply @updateDevicePermissions, data.devices
+        @async.apply @refreshDevices, data.devices
+      ], =>
         callback()
 
   refreshConfigWorker: (task, callback=->) =>
@@ -86,7 +97,7 @@ class Gateblu extends EventEmitter
 
   refreshDevices: (devices, callback=->) =>
     devices ?= []
-    debug 'refreshDevices', devices
+    debug 'refreshDevices', _.pluck devices, 'uuid'
     @async.mapSeries devices, @getMeshbluDevice, (error, devices) =>
       console.error error if error?
 
@@ -94,14 +105,14 @@ class Gateblu extends EventEmitter
 
       @devices = _.compact devices
       @async.series [
-        (callback) => @updateGateblu -> callback()
-        (callback) => @addDevices -> callback()
-        (callback) => @startDevices -> callback()
-        (callback) => @removeDevices -> callback()
-        (callback) => @stopDevices -> callback()
+        @async.apply @updateGateblu
+        @async.apply @generateDeviceTokens
+        @async.apply @addDevices
+        @async.apply @startDevices
+        @async.apply @removeDevices
+        @async.apply @stopDevices
       ], =>
         @oldDevices = _.cloneDeep @devices
-        debug 'refreshDevices', 'in callback', @devices, @oldDevices
         callback()
 
   register: =>
@@ -127,7 +138,7 @@ class Gateblu extends EventEmitter
     devicesToStart = _.filter @devices, (device) ->
       device.stop == false || !device.stop?
 
-    debug 'devicesToStart', devicesToStart
+    debug 'devicesToStart', _.pluck devicesToStart, 'uuid'
 
     @async.eachSeries devicesToStart, (device, callback) =>
       @deviceManager.startDevice device, callback
@@ -145,11 +156,32 @@ class Gateblu extends EventEmitter
   subscribe: (device) =>
     @meshbluConnection.subscribe uuid: device.uuid, token: device.token, types: ['received', 'broadcast']
 
+  updateDevicePermissions: (devices, callback=->) =>
+    @async.eachSeries devices, (device, cb) =>
+      return cb() unless device.token?
+      @meshbluConnection.device uuid: device.uuid, token: device.token, (result) =>
+        data = _.pick result.device, 'uuid', 'token', 'sendAsWhitelist', 'receiveAsWhitelist', 'configureWhitelist', 'discoverWhitelist'
+        data.sendAsWhitelist ?= []
+        data.receiveAsWhitelist ?= []
+        data.configureWhitelist ?= []
+        data.discoverWhitelist ?= []
+
+        data.sendAsWhitelist.push @config.uuid
+        data.receiveAsWhitelist.push @config.uuid
+        data.configureWhitelist.push @config.uuid
+        data.discoverWhitelist.push @config.uuid
+
+        @meshbluConnection.update data, => cb()
+    , callback
+
   updateGateblu: (callback=->) =>
-    @meshbluConnection.whoami {}, (data) =>
-      data.devices = @devices
-      @meshbluConnection.update data, (response) =>
-        callback()
+    data =
+      uuid: @config.uuid
+      devices: _.map @devices, (device) => _.pick device, 'uuid', 'connector', 'type'
+      version: packageJSON.version
+
+    @meshbluConnection.update data, (response) =>
+      callback()
 
   unsubscribe: (device) =>
     @meshbluConnection.unsubscribe uuid: device.uuid, token: device.token, types: ['received', 'broadcast']
