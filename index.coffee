@@ -68,7 +68,7 @@ class Gateblu extends EventEmitter
         return callback null if result.error?.code == 404
         return callback new Error(result.error?.message) if result.error?
         debug 'got device', result?.device?.uuid
-        callback null, _.extend result.device, device
+        callback null, result?.device
     , 500
 
   ensureType: (callback=->) =>
@@ -160,7 +160,8 @@ class Gateblu extends EventEmitter
     @async.eachSeries devices, (device, cb) =>
       return cb() unless device.token?
       @meshbluConnection.device uuid: device.uuid, token: device.token, (result) =>
-        data = _.pick result.device, 'uuid', 'token', 'sendAsWhitelist', 'receiveAsWhitelist', 'configureWhitelist', 'discoverWhitelist'
+        data = _.pick result.device, 'uuid', 'sendAsWhitelist', 'receiveAsWhitelist', 'configureWhitelist', 'discoverWhitelist'
+        data.token = device.token
         data.sendAsWhitelist ?= []
         data.receiveAsWhitelist ?= []
         data.configureWhitelist ?= []
@@ -171,7 +172,10 @@ class Gateblu extends EventEmitter
         data.configureWhitelist.push @config.uuid
         data.discoverWhitelist.push @config.uuid
 
-        @meshbluConnection.update data, => cb()
+        @meshbluConnection.update data, (result) =>
+          return cb new Error(result?.error?.message) if result?.error?
+          cb()
+
     , callback
 
   updateGateblu: (callback=->) =>
@@ -180,7 +184,8 @@ class Gateblu extends EventEmitter
       devices: _.map @devices, (device) => _.pick device, 'uuid', 'connector', 'type'
       version: packageJSON.version
 
-    @meshbluConnection.update data, (response) =>
+    @meshbluConnection.update data, (result) =>
+      return callback new Error(result?.error?.message) if result?.error?
       callback()
 
   unsubscribe: (device) =>
