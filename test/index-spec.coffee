@@ -508,8 +508,8 @@ describe 'Gateblu', ->
       it 'should not have an error', ->
         expect(@error).not.to.exist
 
-      it 'should return a result merged with the original device (to preserve token)', ->
-        expect(@result).to.deep.equal uuid: '123', token: '456', stuff: []
+      it 'should return the device', ->
+        expect(@result).to.deep.equal uuid: '123', stuff: []
 
   describe 'subscribe', ->
     beforeEach ->
@@ -539,4 +539,4 @@ describe 'Gateblu', ->
       @sut.updateGateblu => done()
 
     it 'should call update on meshblu', ->
-      expect(@fakeConnection.update).to.have.been.calledWith uuid: 'guid', devices: [type: 'bar'], version: "5.0.0"
+      expect(@fakeConnection.update).to.have.been.calledWith uuid: 'guid', devices: [type: 'bar'], version: "5.0.1"
