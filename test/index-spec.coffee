@@ -1,17 +1,18 @@
-{EventEmitter} = require 'events'
-Gateblu = require '../index'
 _ = require 'lodash'
+Gateblu = require '../index'
+packageJSON = require '../package.json'
+{EventEmitter2} = require 'eventemitter2'
 
 describe 'Gateblu', ->
   beforeEach ->
-    @fakeConnection = new EventEmitter
+    @fakeConnection = new EventEmitter2
     @fakeConnection.whoami = sinon.stub()
     class FakeMeshblu
       createConnection: sinon.stub()
 
     @fakeMeshblu = new FakeMeshblu
     @fakeMeshblu.createConnection.returns(@fakeConnection)
-    @deviceManager = new EventEmitter
+    @deviceManager = new EventEmitter2
 
   describe 'is an EventEmitter', ->
     beforeEach ->
@@ -539,4 +540,4 @@ describe 'Gateblu', ->
       @sut.updateGateblu => done()
 
     it 'should call update on meshblu', ->
-      expect(@fakeConnection.update).to.have.been.calledWith uuid: 'guid', devices: [type: 'bar'], version: "5.0.1"
+      expect(@fakeConnection.update).to.have.been.calledWith uuid: 'guid', devices: [type: 'bar'], version: packageJSON.version

@@ -1,6 +1,6 @@
 {
   "name": "gateblu",
-  "version": "5.0.1",
+  "version": "5.1.0",
   "description": "Gateblu core library",
   "main": "index.js",
   "scripts": {
@@ -21,6 +21,7 @@
     "async": "^1.4.2",
     "coffee-script": "^1.9.2",
     "debug": "^2.1.0",
+    "eventemitter2": "^0.4.14",
     "fstream": "^1.0.7",
     "lodash": "^3.9.3",
     "meshblu": "^1.21.0",

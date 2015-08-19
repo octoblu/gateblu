@@ -2,9 +2,9 @@
 _            = require 'lodash'
 debug        = require('debug')('gateblu:index')
 packageJSON  = require './package.json'
-{EventEmitter} = require 'events'
+{EventEmitter2} = require 'eventemitter2'
 
-class Gateblu extends EventEmitter
+class Gateblu extends EventEmitter2
   constructor: (@config, @deviceManager, dependencies={}) ->
     @meshblu = dependencies.meshblu || require 'meshblu'
     @async = dependencies.async || require 'async'
@@ -19,9 +19,9 @@ class Gateblu extends EventEmitter
 
     debug 'devicesToAdd', devicesToAdd?.uuid
 
-    @async.eachSeries devicesToAdd, (device, callback) =>
+    @async.eachSeries devicesToAdd, (device, cb) =>
       @subscribe device
-      @deviceManager.addDevice device, callback
+      @deviceManager.addDevice device, cb
     , callback
 
   addToRefreshQueueImmediately: (callback=->) =>
@@ -56,6 +56,7 @@ class Gateblu extends EventEmitter
   generateDeviceTokens: (callback=->) =>
     @async.eachSeries @devices, (device, cb) =>
       @meshbluConnection.generateAndStoreToken uuid: device.uuid, (result) =>
+        return cb new Error(result?.error?.message) if result?.error?
         device.token = result?.token
         cb()
     , callback
@@ -76,11 +77,14 @@ class Gateblu extends EventEmitter
     @meshbluConnection.whoami {}, (data) =>
       return callback() if data.type?
       debug 'no type set, updating'
-      @meshbluConnection.update type: 'device:gateblu', =>
+      @meshbluConnection.update type: 'device:gateblu', (result) =>
+        return callback new Error(result?.error?.message) if result?.error?
         callback()
 
   refreshConfig: (callback=->) =>
     @meshbluConnection.whoami {}, (data) =>
+      return callback new Error(data?.error?.message) if data?.error?
+
       hash = data.meshblu?.hash
       debug 'refreshConfig compare hash', @previousHash, hash, @previousHash == hash
       return callback() if @previousHash? && @previousHash == hash
@@ -89,8 +93,7 @@ class Gateblu extends EventEmitter
       @async.series [
         @async.apply @updateDevicePermissions, data.devices
         @async.apply @refreshDevices, data.devices
-      ], =>
-        callback()
+      ], callback
 
   refreshConfigWorker: (task, callback=->) =>
     @refreshConfig callback
@@ -99,8 +102,7 @@ class Gateblu extends EventEmitter
     devices ?= []
     debug 'refreshDevices', _.pluck devices, 'uuid'
     @async.mapSeries devices, @getMeshbluDevice, (error, devices) =>
-      console.error error if error?
-
+      return callback error if error?
       return callback() if _.eq devices, @oldDevices
 
       @devices = _.compact devices
@@ -111,13 +113,16 @@ class Gateblu extends EventEmitter
         @async.apply @startDevices
         @async.apply @removeDevices
         @async.apply @stopDevices
-      ], =>
+      ], (error) =>
+        return callback error if error?
+
         @oldDevices = _.cloneDeep @devices
         callback()
 
   register: =>
     debug 'registering'
     @meshbluConnection.register type: 'device:gateblu', (data) =>
+      return @emit 'error', new Error(data?.error?.message) if data?.error?
       debug 'registered', data
       @meshbluConnection.identify
         uuid: data.uuid
@@ -129,9 +134,9 @@ class Gateblu extends EventEmitter
 
     debug 'devicesToRemove', devicesToRemove
 
-    @async.eachSeries devicesToRemove, (device, callback) =>
+    @async.eachSeries devicesToRemove, (device, cb) =>
       @unsubscribe device
-      @deviceManager.removeDevice device, callback
+      @deviceManager.removeDevice device, cb
     , callback
 
   startDevices: (callback=->) =>
@@ -154,12 +159,15 @@ class Gateblu extends EventEmitter
     , callback
 
   subscribe: (device) =>
-    @meshbluConnection.subscribe uuid: device.uuid, token: device.token, types: ['received', 'broadcast']
+    @meshbluConnection.subscribe uuid: device.uuid, token: device.token, types: ['received', 'broadcast'], (result) =>
+      return @emit 'error', new Error(result?.error?.message) if result?.error?
 
   updateDevicePermissions: (devices, callback=->) =>
     @async.eachSeries devices, (device, cb) =>
       return cb() unless device.token?
       @meshbluConnection.device uuid: device.uuid, token: device.token, (result) =>
+        return cb new Error(result?.error?.message) if result?.error?
+
         data = _.pick result.device, 'uuid', 'sendAsWhitelist', 'receiveAsWhitelist', 'configureWhitelist', 'discoverWhitelist'
         data.token = device.token
         data.sendAsWhitelist ?= []
@@ -175,7 +183,6 @@ class Gateblu extends EventEmitter
         @meshbluConnection.update data, (result) =>
           return cb new Error(result?.error?.message) if result?.error?
           cb()
-
     , callback
 
   updateGateblu: (callback=->) =>
@@ -189,6 +196,7 @@ class Gateblu extends EventEmitter
       callback()
 
   unsubscribe: (device) =>
-    @meshbluConnection.unsubscribe uuid: device.uuid, token: device.token, types: ['received', 'broadcast']
+    @meshbluConnection.unsubscribe uuid: device.uuid, token: device.token, types: ['received', 'broadcast'], (result) =>
+      return @emit 'error', new Error(result?.error?.message) if result?.error?
 
 module.exports = Gateblu
