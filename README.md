@@ -10,7 +10,7 @@ The core Gateblu library. See [Gateblu Forever](https://github.com/octoblu/gateb
 
 Sample `meshblu.json`
 
-```
+```json
 {
   "server": "meshblu.octoblu.com",
   "port": "80",
