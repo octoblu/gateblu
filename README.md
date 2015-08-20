@@ -5,7 +5,7 @@ The core Gateblu library. See [Gateblu Forever](https://github.com/octoblu/gateb
 [![Build Status](https://travis-ci.org/octoblu/gateblu.svg?branch=master)](https://travis-ci.org/octoblu/gateblu)
 [![Code Climate](https://codeclimate.com/github/octoblu/gateblu/badges/gpa.svg)](https://codeclimate.com/github/octoblu/gateblu)
 [![Test Coverage](https://codeclimate.com/github/octoblu/gateblu/badges/coverage.svg)](https://codeclimate.com/github/octoblu/gateblu)
-[![npm version](https://badge.fury.io/js/meshblu-websocket.svg)](http://badge.fury.io/js/meshblu-websocket)
+[![npm version](https://badge.fury.io/js/gateblu.svg)](http://badge.fury.io/js/gateblu)
 [![Gitter](https://badges.gitter.im/octoblu/help.svg)](https://gitter.im/octoblu/help)
 
 Sample `meshblu.json`
