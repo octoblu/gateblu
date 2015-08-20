@@ -1,8 +1,12 @@
-# gateblu
+# Gateblu
+
+The core Gateblu library. See [Gateblu Forever](https://github.com/octoblu/gateblu-forever) for an example implementation.
 
 [![Build Status](https://travis-ci.org/octoblu/gateblu.svg?branch=master)](https://travis-ci.org/octoblu/gateblu)
 [![Code Climate](https://codeclimate.com/github/octoblu/gateblu/badges/gpa.svg)](https://codeclimate.com/github/octoblu/gateblu)
 [![Test Coverage](https://codeclimate.com/github/octoblu/gateblu/badges/coverage.svg)](https://codeclimate.com/github/octoblu/gateblu)
+[![npm version](https://badge.fury.io/js/meshblu-websocket.svg)](http://badge.fury.io/js/meshblu-websocket)
+[![Gitter](https://badges.gitter.im/octoblu/help.svg)](https://gitter.im/octoblu/help)
 
 This is the library for [Gateblu Forever](https://github.com/octoblu/gateblu-forever).  
 [Gateblu Forever](https://github.com/octoblu/gateblu-forever) will automatically register itself with meshblu.octoblu.com on startup.
@@ -19,5 +23,3 @@ Sample `meshblu.json`
   "token": "0kmpejq8ul434n29pbti61d2q4vg3nmi"
 }
 ```
-
---- Octoblu is awesome ---
