@@ -8,9 +8,6 @@ The core Gateblu library. See [Gateblu Forever](https://github.com/octoblu/gateb
 [![npm version](https://badge.fury.io/js/meshblu-websocket.svg)](http://badge.fury.io/js/meshblu-websocket)
 [![Gitter](https://badges.gitter.im/octoblu/help.svg)](https://gitter.im/octoblu/help)
 
-This is the library for [Gateblu Forever](https://github.com/octoblu/gateblu-forever).  
-[Gateblu Forever](https://github.com/octoblu/gateblu-forever) will automatically register itself with meshblu.octoblu.com on startup.
-
 Sample `meshblu.json`
 
 ```
