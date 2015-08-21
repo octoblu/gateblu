@@ -119,14 +119,20 @@ class Gateblu extends EventEmitter2
         @oldDevices = _.cloneDeep @devices
         callback()
 
-  register: =>
+  register: (options={}, callback=->) =>
     debug 'registering'
-    @meshbluConnection.register type: 'device:gateblu', (data) =>
-      return @emit 'error', new Error(data?.error?.message) if data?.error?
+    options.type = 'device:gateblu'
+    @meshbluConnection.register options, (data) =>
+      if data?.error?
+        @emit 'error', new Error(data?.error?.message)
+        return callback new Error(data?.error?.message)
+
       debug 'registered', data
       @meshbluConnection.identify
         uuid: data.uuid
         token: data.token
+      , =>
+        callback null, data
 
   removeDevices: (callback=->) =>
     devicesToRemove = _.reject @oldDevices, (device) =>
@@ -188,7 +194,7 @@ class Gateblu extends EventEmitter2
   updateGateblu: (callback=->) =>
     data =
       uuid: @config.uuid
-      devices: _.map @devices, (device) => _.pick device, 'uuid', 'connector', 'type'
+      devices: _.map @devices, (device) => _.pick device, 'uuid', 'connector', 'type', 'stop'
       version: packageJSON.version
 
     @meshbluConnection.update data, (result) =>
