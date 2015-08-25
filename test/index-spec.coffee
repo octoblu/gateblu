@@ -195,7 +195,7 @@ describe 'Gateblu', ->
         expect(@fakeConnection.whoami).to.have.been.calledWith {}
 
       it 'should emit the data returned', ->
-        expect(@sut.emit).to.have.been.calledWith 'gateblu:config', uuid: 'guid'
+        expect(@sut.emit).to.have.been.calledWith 'config', devices: [], meshblu: { hash: "12345" }, some: "thing"
 
       it 'should call updateDevicePermissions', ->
         expect(@sut.updateDevicePermissions).to.have.been.calledWith []
