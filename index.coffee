@@ -15,7 +15,7 @@ class Gateblu extends EventEmitter2
 
   addDevices: (callback=->) =>
     devicesToAdd = _.reject @devices, (device) =>
-      _.findWhere @oldDevices, uuid: device.uuid
+      _.contains @oldDevices, device.uuid
 
     debug 'devicesToAdd', devicesToAdd?.uuid
 
@@ -108,7 +108,8 @@ class Gateblu extends EventEmitter2
     debug 'refreshDevices', _.pluck devices, 'uuid'
     @async.mapSeries devices, @getMeshbluDevice, (error, devices) =>
       return callback error if error?
-      return callback() if _.eq devices, @oldDevices
+      deviceUuids = _.pluck devices, 'uuid'
+      return callback() if _.eq deviceUuids, @oldDevices
 
       @devices = _.compact devices
       @async.series [
@@ -122,7 +123,7 @@ class Gateblu extends EventEmitter2
       ], (error) =>
         return callback error if error?
 
-        @oldDevices = _.cloneDeep @devices
+        @oldDevices = _.pluck @devices, 'uuid'
         callback()
 
   register: (options={}, callback=->) =>
@@ -145,8 +146,8 @@ class Gateblu extends EventEmitter2
     callback()
 
   removeDevices: (callback=->) =>
-    devicesToRemove = _.reject @oldDevices, (device) =>
-      _.findWhere @devices, uuid: device.uuid
+    devicesToRemove = _.reject @oldDevices, (uuid) =>
+      _.findWhere @devices, uuid: uuid
 
     debug 'devicesToRemove', devicesToRemove
 
