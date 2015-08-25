@@ -29,11 +29,7 @@ class Gateblu extends EventEmitter2
 
   createConnection: =>
     debug 'createConnection', @config
-    @meshbluConnection = @meshblu.createConnection
-      uuid: @config.uuid
-      token: @config.token
-      server: @config.server
-      port: @config.port
+    @meshbluConnection = @meshblu.createConnection @config
 
     @meshbluConnection.on 'notReady', (data) =>
       debug 'notReady', data
@@ -82,14 +78,14 @@ class Gateblu extends EventEmitter2
         callback()
 
   refreshConfig: (callback=->) =>
-    @meshbluConnection.whoami {}, (data) =>
-      return callback new Error(data?.error?.message) if data?.error?
+    @whoami (error, data) =>
+      return callback error if error?
 
       hash = data.meshblu?.hash
       debug 'refreshConfig compare hash', @previousHash, hash, @previousHash == hash
       return callback() if @previousHash? && @previousHash == hash
       @previousHash = hash if hash?
-      @emit 'gateblu:config', @config
+      @emit 'config', data
       @async.series [
         @async.apply @updateDevicePermissions, data.devices
         @async.apply @refreshDevices, data.devices
@@ -107,6 +103,7 @@ class Gateblu extends EventEmitter2
 
       @devices = _.compact devices
       @async.series [
+        @async.apply @emitRefreshDevices
         @async.apply @updateGateblu
         @async.apply @generateDeviceTokens
         @async.apply @addDevices
@@ -133,6 +130,10 @@ class Gateblu extends EventEmitter2
         token: data.token
       , =>
         callback null, data
+
+  emitRefreshDevices: (callback=->) =>
+    @emit 'refreshDevices', deviceUuids: _.pluck @devices, 'uuid'
+    callback()
 
   removeDevices: (callback=->) =>
     devicesToRemove = _.reject @oldDevices, (device) =>
@@ -204,5 +205,10 @@ class Gateblu extends EventEmitter2
   unsubscribe: (device) =>
     @meshbluConnection.unsubscribe uuid: device.uuid, token: device.token, types: ['received', 'broadcast'], (result) =>
       return @emit 'error', new Error(result?.error?.message) if result?.error?
+
+  whoami: (callback=->) =>
+    @meshbluConnection.whoami {}, (result) =>
+      return callback new Error(result?.error?.message) if result?.error?
+      callback null, result
 
 module.exports = Gateblu
