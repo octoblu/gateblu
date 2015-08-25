@@ -34,6 +34,7 @@ class Gateblu extends EventEmitter2
     @meshbluConnection.on 'notReady', (data) =>
       debug 'notReady', data
       @register() unless @config.uuid?
+      @emit 'notReady', data
 
     @meshbluConnection.on 'ready', (data) =>
       debug 'ready', data
