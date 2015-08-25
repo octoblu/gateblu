@@ -9,7 +9,7 @@ class Gateblu extends EventEmitter2
     @meshblu = dependencies.meshblu || require 'meshblu'
     @async = dependencies.async || require 'async'
     @queue = @async.queue(@refreshConfigWorker)
-    @addToRefreshQueue = _.throttle @addToRefreshQueueImmediately, 5000, trailing: true, leading: false
+    @addToRefreshQueue = _.throttle @addToRefreshQueueImmediately, 2000, trailing: true, leading: false
 
     @createConnection()
 
