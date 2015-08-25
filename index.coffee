@@ -27,17 +27,25 @@ class Gateblu extends EventEmitter2
   addToRefreshQueueImmediately: (callback=->) =>
     @queue?.push {}
 
+  clearCache: =>
+    @previousHash = null
+    @oldDevices = null
+
   createConnection: =>
     debug 'createConnection', @config
     @meshbluConnection = @meshblu.createConnection @config
 
     @meshbluConnection.on 'notReady', (data) =>
       debug 'notReady', data
-      @register() unless @config.uuid?
       @emit 'notReady', data
+
+    @meshbluConnection.on 'disconnect', =>
+      debug 'disconnected'
+      @emit 'disconnected'
 
     @meshbluConnection.on 'ready', (data) =>
       debug 'ready', data
+      @clearCache()
       @config.uuid = data.uuid
       @config.token = data.token
       @ensureType =>
