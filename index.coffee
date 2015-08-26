@@ -145,7 +145,7 @@ class Gateblu extends EventEmitter2
         @sendLogMessage 'error', error, 'map-devices'
         return callback error
       deviceUuids = _.pluck devices, 'uuid'
-      oldDeviceUuids = _.pluck @oldDevices, 'uuid'
+      oldDeviceUuids = _.pluck @oldDevices, 'uuid' if @oldDevices?
       return callback() if _.eq deviceUuids, oldDeviceUuids
 
       @devices = _.compact devices
