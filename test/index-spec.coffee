@@ -7,6 +7,7 @@ describe 'Gateblu', ->
   beforeEach ->
     @fakeConnection = new EventEmitter2
     @fakeConnection.whoami = sinon.stub()
+    @fakeConnection.message = sinon.stub()
     class FakeMeshblu
       createConnection: sinon.stub()
 
