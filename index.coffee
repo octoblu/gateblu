@@ -124,7 +124,7 @@ class Gateblu extends EventEmitter2
       return callback error if error?
       deviceUuids = _.pluck devices, 'uuid'
       oldDeviceUuids = _.pluck @oldDevices, 'uuid'
-      return callback() if _.eq deviceUuids, oldDeviceUuids
+      return callback() if !_.isEmpty @oldDevices && _.eq deviceUuids, oldDeviceUuids
 
       @devices = _.compact devices
       @async.series [
