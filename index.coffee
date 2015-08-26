@@ -15,9 +15,9 @@ class Gateblu extends EventEmitter2
 
   addDevices: (callback=->) =>
     devicesToAdd = _.reject @devices, (device) =>
-      _.contains @oldDevices, device.uuid
+      _.findWhere @oldDevices, uuid: device.uuid
 
-    debug 'devicesToAdd', devicesToAdd?.uuid
+    debug 'devicesToAdd', devicesToAdd
 
     @async.eachSeries devicesToAdd, (device, cb) =>
       @subscribe device
@@ -53,7 +53,21 @@ class Gateblu extends EventEmitter2
         @emit 'ready', data
 
     @meshbluConnection.on 'config', (data) =>
-      @addToRefreshQueue() if data.uuid == @config.uuid
+      return @addToRefreshQueue() if data.uuid == @config.uuid
+      @emit 'device:config', data
+
+    @meshbluConnection.on 'message', (data) =>
+      data.devices = [data.devices] if _.isString data.devices
+      uuids = _.clone data.devices
+      if _.contains uuids, '*'
+        _.pull uuids, '*'
+        uuids.push data.fromUuid
+
+      if _.contains uuids, @config.uuid
+        @emit 'message', data
+
+      intersection = _.intersection uuids, _.pluck(@devices, 'uuid')
+      @emit 'device:message', data unless _.isEmpty intersection
 
     @meshbluConnection.on 'unregistered', (data) =>
       @addToRefreshQueue()
@@ -109,7 +123,8 @@ class Gateblu extends EventEmitter2
     @async.mapSeries devices, @getMeshbluDevice, (error, devices) =>
       return callback error if error?
       deviceUuids = _.pluck devices, 'uuid'
-      return callback() if _.eq deviceUuids, @oldDevices
+      oldDeviceUuids = _.pluck @oldDevices, 'uuid'
+      return callback() if _.eq deviceUuids, oldDeviceUuids
 
       @devices = _.compact devices
       @async.series [
@@ -123,7 +138,7 @@ class Gateblu extends EventEmitter2
       ], (error) =>
         return callback error if error?
 
-        @oldDevices = _.pluck @devices, 'uuid'
+        @oldDevices = _.cloneDeep devices
         callback()
 
   register: (options={}, callback=->) =>
@@ -146,8 +161,8 @@ class Gateblu extends EventEmitter2
     callback()
 
   removeDevices: (callback=->) =>
-    devicesToRemove = _.reject @oldDevices, (uuid) =>
-      _.findWhere @devices, uuid: uuid
+    devicesToRemove = _.reject @oldDevices, (device) =>
+      _.findWhere @devices, uuid: device.uuid
 
     debug 'devicesToRemove', devicesToRemove
 

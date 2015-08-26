@@ -29,25 +29,6 @@ describe 'Gateblu', ->
     it 'should create a queue', ->
       expect(@fakeAsync.queue).to.have.been.calledWith @sut.refreshConfigWorker
 
-  describe 'on: notReady', ->
-    describe 'when unregistered and no uuid', ->
-      beforeEach ->
-        @sut = new Gateblu {}, @deviceManager, meshblu: @fakeMeshblu
-        @sut.register = sinon.spy()
-        @fakeConnection.emit 'notReady'
-
-      it 'should call @register', ->
-        expect(@sut.register).to.have.been.called
-
-    describe 'when unregistered and config has a uuid', ->
-      beforeEach ->
-        @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-        @sut.register = sinon.spy()
-        @fakeConnection.emit 'notReady'
-
-      it 'should not call @register', ->
-        expect(@sut.register).not.to.have.been.called
-
   describe 'on: ready', ->
     describe 'as if the gateway was just registered and identified', ->
       beforeEach ->
@@ -282,6 +263,7 @@ describe 'Gateblu', ->
         @sut.oldDevices = [uuid: 'device']
         @sut.getMeshbluDevice = sinon.stub().yields null, uuid: 'device'
         @sut.updateGateblu = sinon.stub().yields null
+        @sut.generateDeviceTokens = sinon.stub().yields null
         @sut.addDevices = sinon.stub().yields null
         @sut.removeDevices = sinon.stub().yields null
         @sut.stopDevices = sinon.stub().yields null
