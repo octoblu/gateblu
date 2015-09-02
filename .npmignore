@@ -31,3 +31,4 @@ tmp
 devices
 .npmrc
 *.sublime-workspace
+.git
