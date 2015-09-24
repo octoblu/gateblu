@@ -1,18 +1,18 @@
-sudo: false
 language: node_js
-cache:
-  bundler: true
-  directories:
-    - node_modules
 node_js:
-- '0.10'
+- '0.11'
+addons:
+  code_climate:
+    repo_token: 25d743b9605640371ea94d2343d93c7aa16c4c78a3a01b81cd70d3e9481fcb01
+before_script:
+- npm install -g codeclimate-test-reporter
+after_script:
+- codeclimate-test-reporter < coverage/lcov.info
 deploy:
   provider: npm
-  skip_cleanup: true
-  clean_up: false
   email: serveradmin@octoblu.com
   api_key:
-    secure: FpiVIjkEaRIMyfb0pg3/nQd5IMH1ZwMEjWfYaB4dzgZkNCtRAGouQpOkYZVxVnE3rqjm/505n+nv34b9w/ENxnWYWysAa4FpzilPCccaRhFRC0y/QLDucplbo2u4u8QKj0noupqK8ho2Kj0iAC+JNVM0K4GcWy/WP98OLcJr29Y=
+    secure: jmsv4xxwAR5Zi9hN7TPFc/h7UaoinhpLE213FOWkB/1eKztL43aL89LGRHr8isqrjkYtom8N07bdm/9POR51VQMoVMqvruMMlOHAajagUnaydsOMcR7wFEYafPd2mUYvFdQwZNNHzvE5XqZ+JQrD2cGuX1fKyLdTtdN5ntINXZg=
   on:
     tags: true
-    all_branches: true
+    branches: true
