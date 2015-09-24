@@ -1,4 +1,3 @@
-'use strict';
 _            = require 'lodash'
 debug        = require('debug')('gateblu:index')
 packageJSON  = require './package.json'
@@ -229,7 +228,8 @@ class Gateblu extends EventEmitter2
           @sendLogMessage 'error', result?.error?.message, 'device-permissions'
           return cb new Error(result?.error?.message)
 
-        data = _.pick result.device, 'uuid', 'sendAsWhitelist', 'receiveAsWhitelist', 'configureWhitelist', 'discoverWhitelist'
+        whitelistedKeys = ['uuid', 'sendAsWhitelist', 'receiveAsWhitelist', 'configureWhitelist', 'discoverWhitelist']
+        data = _.pick result.device, whitelistedKeys
         data.token = device.token
         data.sendAsWhitelist ?= []
         data.receiveAsWhitelist ?= []
