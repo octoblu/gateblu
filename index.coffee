@@ -98,12 +98,11 @@ class Gateblu extends EventEmitter2
     return callback null unless device.uuid?
     _.delay =>
       @meshbluConnection.device uuid: device.uuid, (result) =>
-        return callback null if result.error?.code == 404
-        if result?.error?
-          @sendLogMessage 'error', result?.error?.message, 'get-meshblu-device'
-          return callback new Error(result.error?.message)
-        debug 'got device', result?.device?.uuid
-        callback null, result?.device
+        return callback new Error('getMeshbluDevice request failed') unless result?
+        return callback null, result.device if result.device?
+        return callback new Error('getMeshbluDevice received invalid response') unless result.error?
+        return callback null if result.error.code == 404
+        return callback new Error(result.error.message)
     , 500
 
   ensureType: (callback=->) =>
