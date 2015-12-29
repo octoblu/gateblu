@@ -306,10 +306,14 @@ describe 'Gateblu', ->
         @sut.oldDevices = [{uuid: 'fork'}]
         @sut.devices = _.cloneDeep @sut.oldDevices
         @fakeConnection.generateAndStoreToken = sinon.stub().yields null, token: 'foo'
+        @fakeConnection.revokeTokenByQuery = sinon.stub().yields null
         @sut.generateDeviceTokens done
 
+      it 'should call revokeTokenByQuery', ->
+        expect(@fakeConnection.revokeTokenByQuery).to.have.been.calledWith tag: @sut.TOKEN_TAG
+
       it 'should call generateAndStoreToken', ->
-        expect(@fakeConnection.generateAndStoreToken).to.have.been.calledWith uuid: 'fork'
+        expect(@fakeConnection.generateAndStoreToken).to.have.been.calledWith uuid: 'fork', tag: @sut.TOKEN_TAG
 
   describe 'addDevices', ->
     describe 'when there are no changes', ->

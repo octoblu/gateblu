@@ -1,6 +1,6 @@
 {
   "name": "gateblu",
-  "version": "5.5.7",
+  "version": "5.5.8",
   "description": "Gateblu core library",
   "main": "index.js",
   "scripts": {
