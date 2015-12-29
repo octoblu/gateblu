@@ -3,6 +3,8 @@ debug        = require('debug')('gateblu:index')
 packageJSON  = require './package.json'
 {EventEmitter2} = require 'eventemitter2'
 
+TOKEN_TAG='gateblu-core'
+
 class Gateblu extends EventEmitter2
   constructor: (@config, @deviceManager, dependencies={}) ->
     @meshblu = dependencies.meshblu || require 'meshblu'
@@ -85,12 +87,13 @@ class Gateblu extends EventEmitter2
 
   generateDeviceTokens: (callback=->) =>
     @async.eachSeries @devices, (device, cb) =>
-      @meshbluConnection.generateAndStoreToken uuid: device.uuid, (result) =>
-        if result?.error?
-          @sendLogMessage 'error', result?.error?.message, 'generate-device-tokens'
-          return cb new Error(result?.error?.message)
-        device.token = result?.token
-        cb()
+      @meshbluConnection.revokeTokenByQuery tag: TOKEN_TAG, =>
+        @meshbluConnection.generateAndStoreToken uuid: device.uuid, tag: TOKEN_TAG, (result) =>
+          if result?.error?
+            @sendLogMessage 'error', result?.error?.message, 'generate-device-tokens'
+            return cb new Error(result?.error?.message)
+          device.token = result?.token
+          cb()
     , callback
 
   getMeshbluDevice: (device, callback=->) =>
