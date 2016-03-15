@@ -3,11 +3,7 @@ debug        = require('debug')('gateblu:index')
 packageJSON  = require './package.json'
 {EventEmitter2} = require 'eventemitter2'
 
-
-
 class Gateblu extends EventEmitter2
-
-
   constructor: (@config, @deviceManager, dependencies={}) ->
     @TOKEN_TAG='gateblu-core'
     @meshblu = dependencies.meshblu || require 'meshblu'
@@ -67,7 +63,6 @@ class Gateblu extends EventEmitter2
         @addToRefreshQueue()
         @emit 'ready', data
 
-
     @meshbluConnection.on 'config', (data) =>
       return @addToRefreshQueue() if data.uuid == @config.uuid
       @emit 'device:config', data
@@ -87,6 +82,10 @@ class Gateblu extends EventEmitter2
 
     @meshbluConnection.on 'unregistered', (data) =>
       @addToRefreshQueue()
+
+    @meshbluConnection.on 'error', (error) =>
+      debug 'error from meshblu', error
+      @emit 'error', error
 
   generateDeviceTokens: (callback=->) =>
     @async.eachSeries @devices, (device, cb) =>
