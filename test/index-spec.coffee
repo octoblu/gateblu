@@ -35,7 +35,6 @@ describe 'Gateblu', ->
       beforeEach ->
         @config = {}
         @sut = new Gateblu @config, @deviceManager, meshblu: @fakeMeshblu
-        sinon.stub @sut, 'ensureType'
         sinon.spy @sut, 'addToRefreshQueue'
         @fakeConnection.emit 'ready', uuid: 'spork', token: 'york'
 
@@ -45,15 +44,8 @@ describe 'Gateblu', ->
       it 'should set config.token', ->
         expect(@config.token).to.equal 'york'
 
-      it 'should call ensureType itself', ->
-        expect(@sut.ensureType).to.have.been.called
-
-      describe 'when ensureType yields', ->
-        beforeEach ->
-          @sut.ensureType.yield null
-
-        it 'should call addToRefreshQueue', ->
-          expect(@sut.addToRefreshQueue).to.have.been.called
+      it 'should call addToRefreshQueue', ->
+        expect(@sut.addToRefreshQueue).to.have.been.called
 
   describe 'on: config', ->
     describe 'gateway config', ->
@@ -87,19 +79,6 @@ describe 'Gateblu', ->
       it 'should call addToRefreshQueue', ->
         expect(@sut.addToRefreshQueue).to.have.been.called
 
-  describe 'register', ->
-    beforeEach ->
-      @sut = new Gateblu uuid: 'guid', @deviceManager, meshblu: @fakeMeshblu
-      @fakeConnection.register = sinon.stub().yields {}
-      @fakeConnection.identify = sinon.spy()
-      @sut.register()
-
-    it 'should call fakeMeshblu.register with type', ->
-      expect(@fakeConnection.register).to.have.been.calledWith type: 'device:gateblu'
-
-    it 'should call fakeConnection.identify', ->
-      expect(@fakeConnection.identify).to.have.been.called
-
   describe 'addToRefreshQueueImmediately', ->
     beforeEach ->
       @fakeQueue = push: sinon.spy()
@@ -109,48 +88,6 @@ describe 'Gateblu', ->
 
     it 'should call push', ->
       expect(@fakeQueue.push).to.have.been.calledWith {}
-
-  describe 'ensureType', ->
-    beforeEach ->
-      @config = {}
-      @fakeConnection.whoami = sinon.stub()
-      @fakeConnection.update = sinon.stub()
-      @sut = new Gateblu @config, @deviceManager, meshblu: @fakeMeshblu
-
-    describe 'when called with a callback', ->
-      beforeEach ->
-        @callback = sinon.spy()
-        @sut.ensureType @callback
-
-      it 'should call whoami', ->
-        expect(@fakeConnection.whoami).to.have.been.called
-
-      it 'should not call the callback yet', ->
-        expect(@callback).to.have.not.been.called
-
-      describe 'when whoami yields with a type', ->
-        beforeEach ->
-          @fakeConnection.whoami.yield type: 'something'
-
-        it 'should call the callback', ->
-          expect(@callback).to.have.been.called
-
-      describe 'when whoami yields without a type', ->
-        beforeEach ->
-          @fakeConnection.whoami.yield uuid: 'something'
-
-        it 'should not call the callback yet', ->
-          expect(@callback).to.have.not.been.called
-
-        it 'should call update with a type', ->
-          expect(@fakeConnection.update).to.have.been.calledWith type: 'device:gateblu'
-
-        describe 'when update yields', ->
-          beforeEach ->
-            @fakeConnection.update.yield null
-
-          it 'should finally call its callback', ->
-            expect(@callback).to.have.been.called
 
   describe 'refreshConfigWorker', ->
     beforeEach ->
