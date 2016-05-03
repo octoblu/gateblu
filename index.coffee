@@ -94,6 +94,7 @@ class Gateblu extends EventEmitter2
         return callback null, result.device if result.device?
         return callback new Error('getMeshbluDevice received invalid response') unless result.error?
         return callback null if result.error.code == 404
+        return callback null if result.error == 'Forbidden'
         return callback new Error(result.error.message)
     , 500
 
