@@ -77,6 +77,7 @@ class Gateblu extends EventEmitter2
 
   generateDeviceTokens: (callback=->) =>
     @async.eachSeries @devices, (device, done) =>
+      return done() if device.token?
       @meshbluConnection.revokeTokenByQuery tag: @TOKEN_TAG, =>
         @meshbluConnection.generateAndStoreToken uuid: device.uuid, tag: @TOKEN_TAG, (result) =>
           if result?.error?
