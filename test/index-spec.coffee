@@ -464,4 +464,4 @@ describe 'Gateblu', ->
       @sut.updateGateblu => done()
 
     it 'should call update on meshblu', ->
-      expect(@fakeConnection.update).to.have.been.calledWith uuid: 'guid', devices: [type: 'bar'], version: packageJSON.version
+      expect(@fakeConnection.update).to.have.been.calledWith uuid: 'guid', version: packageJSON.version
