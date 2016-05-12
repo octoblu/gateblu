@@ -211,7 +211,6 @@ class Gateblu extends EventEmitter2
   updateGateblu: (callback=->) =>
     data =
       uuid: @config.uuid
-      devices: _.map @devices, (device) => _.pick device, 'uuid', 'connector', 'type', 'stop'
       version: packageJSON.version
 
     @meshbluConnection.update data, (result) =>
